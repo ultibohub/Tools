@@ -4,7 +4,8 @@ This repository contains a collection of tools and utilities for the Ultibo proj
 
 Some of these are already included in the Ultibo core installer package, see the readme in each folder for additional information.
 
-The source is available by downloading or cloning this repository, from the releases tab you can download a zip file containing pre compiled binaries for each tool.
+The source is available by downloading or cloning this repository, to download a zip file containing precompiled binaries for each tool go to the releases page https://github.com/ultibohub/Tools/releases
+
 
 Current tools and utilities:
 

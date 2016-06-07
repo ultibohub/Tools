@@ -8,9 +8,13 @@ The tool only runs once at the end of the install and is not required again, the
 files updated are:
 
 FP.CFG
+
 FPC.CFG
+
 RPI.CFG
+
 RPI2.CFG
+
 RPI3.CFG
 
 environmentoptions.xml
