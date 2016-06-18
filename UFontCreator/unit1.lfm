@@ -1,0 +1,295 @@
+object Form1: TForm1
+  Left = 7
+  Height = 544
+  Top = 147
+  Width = 927
+  Caption = 'Ultibo Custom Font Creator'
+  ClientHeight = 544
+  ClientWidth = 927
+  OnCreate = FormCreate
+  LCLVersion = '1.6.0.4'
+  object Label1: TLabel
+    Left = 18
+    Height = 15
+    Top = 64
+    Width = 47
+    Caption = 'Font Size'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 18
+    Height = 15
+    Top = 11
+    Width = 24
+    Caption = 'Font'
+    ParentColor = False
+  end
+  object cbFont: TComboBox
+    Left = 15
+    Height = 23
+    Top = 29
+    Width = 224
+    ItemHeight = 15
+    OnChange = cbFontChange
+    TabOrder = 0
+    Text = 'cbFont'
+  end
+  object Label4: TLabel
+    Left = 259
+    Height = 15
+    Top = 11
+    Width = 84
+    Caption = 'Font Max Width'
+    ParentColor = False
+  end
+  object edMaxFWidth: TEdit
+    Left = 256
+    Height = 23
+    Top = 29
+    Width = 80
+    NumbersOnly = True
+    ReadOnly = True
+    TabOrder = 1
+    Text = 'edMaxFWidth'
+  end
+  object Label5: TLabel
+    Left = 387
+    Height = 15
+    Top = 11
+    Width = 63
+    Caption = 'Font Height'
+    ParentColor = False
+  end
+  object edFHeight: TEdit
+    Left = 384
+    Height = 23
+    Top = 29
+    Width = 80
+    NumbersOnly = True
+    ReadOnly = True
+    TabOrder = 2
+    Text = 'edFHeight'
+  end
+  object Label6: TLabel
+    Left = 259
+    Height = 15
+    Top = 58
+    Width = 66
+    Caption = 'UFont Mode'
+    ParentColor = False
+  end
+  object cbUFontMode: TComboBox
+    Left = 256
+    Height = 23
+    Top = 79
+    Width = 208
+    ItemHeight = 15
+    ItemIndex = 0
+    Items.Strings = (
+      '1 Bit Per Pixel'
+    )
+    TabOrder = 3
+    Text = '1 Bit Per Pixel'
+  end
+  object Label7: TLabel
+    Left = 259
+    Height = 15
+    Top = 114
+    Width = 60
+    Caption = 'UFont Type'
+    ParentColor = False
+  end
+  object cbUFontType: TComboBox
+    Left = 256
+    Height = 23
+    Top = 135
+    Width = 208
+    ItemHeight = 15
+    ItemIndex = 0
+    Items.Strings = (
+      'Fixed'
+    )
+    TabOrder = 4
+    Text = 'Fixed'
+  end
+  object mmoSample: TMemo
+    Left = 16
+    Height = 128
+    Top = 336
+    Width = 456
+    Font.CharSet = ANSI_CHARSET
+    Font.Height = -24
+    Font.Name = 'Cambria Math'
+    Font.Pitch = fpVariable
+    Font.Quality = fqDraft
+    Lines.Strings = (
+      'Sample Text ABC123'
+    )
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 5
+  end
+  object Label8: TLabel
+    Left = 24
+    Height = 15
+    Top = 315
+    Width = 63
+    Caption = 'Sample Text'
+    ParentColor = False
+  end
+  object seFontSize: TSpinEdit
+    Left = 15
+    Height = 23
+    Top = 79
+    Width = 84
+    OnChange = seFontSizeChange
+    TabOrder = 6
+    Value = 10
+  end
+  object btnExport: TButton
+    Left = 389
+    Height = 25
+    Top = 177
+    Width = 75
+    Caption = 'Export'
+    OnClick = btnExportClick
+    TabOrder = 7
+  end
+  object seChar: TSpinEdit
+    Left = 416
+    Height = 23
+    Top = 216
+    Width = 48
+    MaxValue = 256
+    OnChange = seCharChange
+    TabOrder = 8
+    Value = 33
+  end
+  object lbChar: TLabel
+    Left = 15
+    Height = 15
+    Top = 176
+    Width = 35
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'lbChar'
+    Color = clWhite
+    ParentColor = False
+    ParentFont = False
+    Transparent = False
+  end
+  object lbW: TLabel
+    Left = 440
+    Height = 15
+    Top = 256
+    Width = 21
+    Caption = 'lbW'
+    ParentColor = False
+  end
+  object lbH: TLabel
+    Left = 440
+    Height = 15
+    Top = 283
+    Width = 19
+    Caption = 'lbH'
+    ParentColor = False
+  end
+  object lbW1: TLabel
+    Left = 389
+    Height = 15
+    Top = 256
+    Width = 39
+    Caption = 'Char W'
+    ParentColor = False
+  end
+  object lbH1: TLabel
+    Left = 389
+    Height = 15
+    Top = 283
+    Width = 37
+    Caption = 'Char H'
+    ParentColor = False
+  end
+  object Label9: TLabel
+    Left = 352
+    Height = 15
+    Top = 220
+    Width = 56
+    Caption = 'Char Code'
+    ParentColor = False
+  end
+  object mmoData: TMemo
+    Left = 480
+    Height = 499
+    Top = 29
+    Width = 432
+    Font.CharSet = ANSI_CHARSET
+    Font.Height = -13
+    Font.Name = 'Fixedsys'
+    Font.Pitch = fpFixed
+    Font.Quality = fqDraft
+    Lines.Strings = (
+      'mmoData'
+    )
+    ParentFont = False
+    ReadOnly = True
+    TabOrder = 9
+  end
+  object Image1: TImage
+    Left = 157
+    Height = 90
+    Top = 293
+    Width = 90
+    Visible = False
+  end
+  object Label3: TLabel
+    Left = 16
+    Height = 15
+    Top = 152
+    Width = 94
+    Caption = 'Current Character'
+    ParentColor = False
+  end
+  object Label10: TLabel
+    Left = 482
+    Height = 15
+    Top = 10
+    Width = 95
+    Caption = 'Font Data Preview'
+    ParentColor = False
+  end
+  object Memo1: TMemo
+    Left = 16
+    Height = 56
+    Top = 472
+    Width = 456
+    Lines.Strings = (
+      'NOTE:  Please respect all font copyright restrictions when exporting fonts for'
+      'embedded use in your Ultibo application.  Not all fonts, including some free ones,'
+      'allow for use in embedded systems.'
+    )
+    ReadOnly = True
+    TabOrder = 10
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 10
+    OnTimer = Timer1Timer
+    left = 256
+    top = 168
+  end
+  object Timer2: TTimer
+    Enabled = False
+    Interval = 10
+    OnTimer = Timer2Timer
+    left = 296
+    top = 168
+  end
+  object Timer3: TTimer
+    Enabled = False
+    Interval = 50
+    OnTimer = Timer3Timer
+    left = 336
+    top = 168
+  end
+end

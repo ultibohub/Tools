@@ -1,0 +1,43 @@
+object Form1: TForm1
+  Left = 89
+  Height = 87
+  Top = 372
+  Width = 494
+  Caption = 'Form1'
+  ClientHeight = 87
+  ClientWidth = 494
+  LCLVersion = '1.6.0.4'
+  object Edit1: TEdit
+    Left = 8
+    Height = 23
+    Top = 8
+    Width = 480
+    ReadOnly = True
+    TabOrder = 0
+  end
+  object Button1: TButton
+    Left = 8
+    Height = 25
+    Top = 40
+    Width = 100
+    AutoSize = True
+    Caption = 'Load Font File'
+    OnClick = Button1Click
+    TabOrder = 1
+  end
+  object Button2: TButton
+    Left = 376
+    Height = 25
+    Top = 40
+    Width = 111
+    AutoSize = True
+    Caption = 'Export Font Unit'
+    OnClick = Button2Click
+    TabOrder = 2
+  end
+  object OpenDialog1: TOpenDialog
+    Filter = 'UFnt|*.ufnt'
+    left = 224
+    top = 24
+  end
+end
