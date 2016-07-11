@@ -64,7 +64,7 @@ var
   Height:19;
   Count:256;
   Mode:FONT_MODE_PIXEL;
-  Flags:FONT_FLAG_BIGENDIAN;
+  Flags:FONT_FLAG_BIGENDIAN or FONT_FLAG_RIGHTALIGN;
   Mask:0;
   CodePage:CP_ACP;
   Name:('Hack_12');

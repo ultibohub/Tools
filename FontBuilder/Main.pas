@@ -991,8 +991,7 @@ begin
  openMain.Filter:=FONT_FORMAT_FILTERS[FFormat];
  if Length(openMain.InitialDir) = 0 then
   begin
-   //openMain.InitialDir:=ExtractFilePath(Application.ExeName); //To Do
-   openMain.InitialDir:='F:\Download\RaspberryPi\Sources\kbd-2.0.3\data\consolefonts';
+   openMain.InitialDir:=ExtractFilePath(Application.ExeName);
   end;
  if openMain.Execute then
   begin
