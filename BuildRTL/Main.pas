@@ -44,15 +44,20 @@ RTL Builder
  [BuildRTL]
  PathPrefix=
  InstallPath=
+ CompilerName=
  CompilerPath=
  CompilerVersion=
  SourcePath=
+
+ ARMCompiler=
+ AARCH64Compiler=
 
  BuildRTL=
  BuildPackages=
 
  PlatformARMv6=
  PlatformARMv7=
+ PlatformARMv8=
 
  A brief explanation of each parameter along with the standard default value:
 
@@ -60,11 +65,17 @@ RTL Builder
 
  InstallPath - The path where Ultibo core is installed (Default: C:\Ultibo\Core) (Detected from the application path)
 
+ CompilerName - The name of the Free Pascal compiler (Default: fpc.exe)
+
  CompilerPath - The path where the Ultibo version of FPC is installed (Default: <InstallPath>\fpc\<CompilerVersion>)
 
  CompilerVersion - The version of the FPC compiler (Default: 3.1.1)
 
  SourcePath - The path to RTL and Packages source code (Default: <CompilerPath>\source)
+
+ ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
+ 
+ AARCH64Compiler - The name of the Free Pascal AARCH64 Compiler or Cross Compiler (Default: <Blank>)
 
  BuildRTL - Enable or disable building the RTL (0=Disable / 1=Enable) (Default: 1)
 
@@ -73,6 +84,8 @@ RTL Builder
  PlatformARMv6 - Build the RTL and Packages for ARMv6 architecture (0=Disable / 1=Enable) (Default: 1)
 
  PlatformARMv7 - Build the RTL and Packages for ARMv7 architecture (0=Disable / 1=Enable) (Default: 1)
+
+ PlatformARMv8 - Build the RTL and Packages for ARMv8 architecture (0=Disable / 1=Enable) (Default: 1)
 
 }
 
@@ -99,6 +112,7 @@ type
     cmdBuild: TButton;
     chkARMv6: TCheckBox;
     chkARMv7: TCheckBox;
+    chkARMv8: TCheckBox;
     lblMain: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -108,19 +122,25 @@ type
     procedure cmdBuildClick(Sender: TObject);
     procedure chkARMv6Click(Sender: TObject);
     procedure chkARMv7Click(Sender: TObject);
+    procedure chkARMv8Click(Sender: TObject);
   private
     { Private declarations }
     PathPrefix:String;
     InstallPath:String;
     SourcePath:String;
+    CompilerName:String;
     CompilerPath:String;
     CompilerVersion:String;
+
+    ARMCompiler:String;
+    AARCH64Compiler:String;
 
     BuildRTL:Boolean;
     BuildPackages:Boolean;
 
     PlatformARMv6:Boolean;
     PlatformARMv7:Boolean;
+    PlatformARMv8:Boolean;
   public
     { Public declarations }
     function LoadConfig:Boolean;
@@ -150,6 +170,8 @@ function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:Str
 
 function AddTrailingSlash(const FilePath:String):String;
 function StripTrailingSlash(const FilePath:String):String;
+
+function IsWinNT6orAbove:Boolean;
 
 implementation
 
@@ -419,6 +441,7 @@ begin
     FillChar(StartupInfo,SizeOf(TStartupInfo),0);
     StartupInfo.cb:=SizeOf(TStartupInfo);
     StartupInfo.hStdInput:=ReadHandle;
+    if not(IsWinNT6orAbove) then StartupInfo.hStdInput:=INVAlID_HANDLE_VALUE; {Don't pass StdInput handle if less the Vista}
     StartupInfo.hStdOutput:=WriteHandle;
     StartupInfo.hStdError:=WriteHandle;
     StartupInfo.dwFlags:=STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;
@@ -533,6 +556,22 @@ begin
 end;
 
 {==============================================================================}
+
+function IsWinNT6orAbove:Boolean;
+{Returns True for WindowsVista(6.0) or higher}
+var
+ OsVersionInfo:TOSVersionInfo;
+begin
+ {}
+ Result:=False;
+ FillChar(OsVersionInfo,SizeOf(OsVersionInfo),0);
+ OsVersionInfo.dwOSVersionInfoSize:=SizeOf(OsVersionInfo);
+ if not GetVersionEx(OsVersionInfo) then Exit;
+ if OsVersionInfo.dwPlatformId <> VER_PLATFORM_WIN32_NT then Exit;
+ Result:=(OsVersionInfo.dwMajorVersion >= 6);
+end;
+
+{==============================================================================}
 {==============================================================================}
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -547,17 +586,27 @@ begin
  {The current compiler version}
  CompilerVersion:='3.1.1';
 
+ {Assume the compiler name is fpc.exe}
+ CompilerName:='fpc.exe';
+
  {Assume that the compiler path will be \fpc\<CompilerVersion> under the InstallPath}
  CompilerPath:=InstallPath + '\fpc\' + CompilerVersion;
 
  {Assume that the source path will be \source under the CompilerPath}
  SourcePath:=CompilerPath + '\source';
 
+ {The names of the ARM compiler or cross compiler}
+ ARMCompiler:='';
+
+ {The names of the AARCH64 compiler or cross compiler}
+ AARCH64Compiler:='';
+
  BuildRTL:=True;
  BuildPackages:=True;
 
  PlatformARMv6:=True;
  PlatformARMv7:=True;
+ PlatformARMv8:=True;
 
  LoadConfig;
 end;
@@ -573,10 +622,44 @@ end;
 {==============================================================================}
 
 procedure TfrmMain.FormShow(Sender: TObject);
+var
+ Scale:Double;
 begin
  {}
  chkARMv6.Checked:=PlatformARMv6;
  chkARMv7.Checked:=PlatformARMv7;
+ chkARMv8.Checked:=PlatformARMv8;
+
+ {Check PixelsPerInch}
+ if PixelsPerInch > 96 then
+  begin
+   {Calculate Scale}
+   Scale:=(PixelsPerInch / 96);
+
+   {Disable Anchors}
+   lblMain.Anchors:=[akLeft,akTop];
+   chkARMv6.Anchors:=[akLeft,akTop];
+   chkARMv7.Anchors:=[akLeft,akTop];
+   chkARMv8.Anchors:=[akLeft,akTop];
+   cmdBuild.Anchors:=[akLeft,akTop];
+   cmdExit.Anchors:=[akLeft,akTop];
+
+   {Resize Form}
+   Width:=Trunc(Width * Scale);
+   Height:=Trunc(Height * Scale);
+
+   {Move Buttons}
+   cmdBuild.Left:=pnlMain.Width - Trunc(100 * Scale); {907 - 807 = 100}
+   cmdExit.Left:=pnlMain.Width - Trunc(100 * Scale);  {907 - 807 = 100}
+
+   {Enable Anchors}
+   lblMain.Anchors:=[akLeft,akTop,akRight];
+   chkARMv6.Anchors:=[akLeft,akTop,akRight];
+   chkARMv7.Anchors:=[akLeft,akTop,akRight];
+   chkARMv8.Anchors:=[akLeft,akTop,akRight];
+   cmdBuild.Anchors:=[akTop,akRight];
+   cmdExit.Anchors:=[akTop,akRight];
+  end;
 end;
 
 {==============================================================================}
@@ -605,6 +688,14 @@ end;
 
 {==============================================================================}
 
+procedure TfrmMain.chkARMv8Click(Sender: TObject);
+begin
+ {}
+ PlatformARMv8:=chkARMv8.Checked;
+end;
+
+{==============================================================================}
+
 procedure TfrmMain.cmdExitClick(Sender: TObject);
 begin
  {}
@@ -620,6 +711,7 @@ begin
  lblPlatforms.Enabled:=False;
  chkARMv6.Enabled:=False;
  chkARMv7.Enabled:=False;
+ chkARMv8.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
  try
@@ -636,12 +728,28 @@ begin
   {Add Install Path}
   mmoMain.Lines.Add(' Install Path is ' + InstallPath);
   mmoMain.Lines.Add('');
+  {Add Compiler Name}
+  mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
+  mmoMain.Lines.Add('');
   {Add Compiler Path}
   mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
   mmoMain.Lines.Add('');
   {Add Source Path}
   mmoMain.Lines.Add(' Source Path is ' + SourcePath);
   mmoMain.Lines.Add('');
+
+  {Add ARM Compiler}
+  if Length(ARMCompiler) <> 0 then
+   begin
+    mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
+    mmoMain.Lines.Add('');
+   end;
+  {Add AARCH64 Compiler}
+  if Length(AARCH64Compiler) <> 0 then
+   begin
+    mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
+    mmoMain.Lines.Add('');
+   end;
 
   {Create Build File}
   mmoMain.Lines.Add(' Creating Build Script');
@@ -670,6 +778,7 @@ begin
   lblPlatforms.Enabled:=True;
   chkARMv6.Enabled:=True;
   chkARMv7.Enabled:=True;
+  chkARMv8.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
  end;
@@ -700,12 +809,19 @@ begin
      PathPrefix:=IniFile.ReadString(Section,'PathPrefix',PathPrefix);
      {Get InstallPath}
      InstallPath:=IniFile.ReadString(Section,'InstallPath',InstallPath);
+     {Get CompilerName}
+     CompilerName:=IniFile.ReadString(Section,'CompilerName',CompilerName);
      {Get CompilerPath}
      CompilerPath:=IniFile.ReadString(Section,'CompilerPath',CompilerPath);
      {Get CompilerVersion}
      CompilerVersion:=IniFile.ReadString(Section,'CompilerVersion',CompilerVersion);
      {Get SourcePath}
      SourcePath:=IniFile.ReadString(Section,'SourcePath',SourcePath);
+
+     {Get ARMCompiler}
+     ARMCompiler:=IniFile.ReadString(Section,'ARMCompiler',ARMCompiler);
+     {Get AARCH64Compiler}
+     AARCH64Compiler:=IniFile.ReadString(Section,'AARCH64Compiler',AARCH64Compiler);
 
      {Get BuildRTL}
      BuildRTL:=IniFile.ReadBool(Section,'BuildRTL',BuildRTL);
@@ -716,6 +832,8 @@ begin
      PlatformARMv6:=IniFile.ReadBool(Section,'PlatformARMv6',PlatformARMv6);
      {Get PlatformARMv7}
      PlatformARMv7:=IniFile.ReadBool(Section,'PlatformARMv7',PlatformARMv7);
+     {Get PlatformARMv8}
+     PlatformARMv8:=IniFile.ReadBool(Section,'PlatformARMv8',PlatformARMv8);
     finally
      IniFile.Free;
     end;
@@ -740,10 +858,17 @@ begin
  try
   if Length(SourcePath) = 0 then Exit;
   if Length(InstallPath) = 0 then Exit;
+  if Length(CompilerName) = 0 then Exit;
   if Length(CompilerPath) = 0 then Exit;
   if Length(CompilerVersion) = 0 then Exit;
   if not(BuildRTL) and not(BuildPackages) then Exit;
-  if not(PlatformARMv6) and not(PlatformARMv7) then Exit;
+  if not(PlatformARMv6) and not(PlatformARMv7) and not(PlatformARMv8) then Exit;
+
+  {Get ARM Compiler}
+  if Length(ARMCompiler) = 0 then ARMCompiler:=CompilerName;
+
+  {Get AARCH64 Compiler}
+  if Length(AARCH64Compiler) = 0 then AARCH64Compiler:=CompilerName;
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + '__buildrtl.bat';
@@ -787,10 +912,9 @@ begin
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -799,10 +923,9 @@ begin
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -811,10 +934,9 @@ begin
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
        WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/rtl' + LineEnd;
 
@@ -837,10 +959,9 @@ begin
        {RTL Clean (To remove units from \rtl\units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -849,10 +970,9 @@ begin
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -861,10 +981,9 @@ begin
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv6-ultibo\rtl"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -873,10 +992,9 @@ begin
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
        WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/packages' + LineEnd;
 
@@ -903,10 +1021,9 @@ begin
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -915,10 +1032,9 @@ begin
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -927,10 +1043,9 @@ begin
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
        WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/rtl' + LineEnd;
 
@@ -953,10 +1068,9 @@ begin
        {RTL Clean (To remove units from \rtl\units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -965,10 +1079,9 @@ begin
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -977,10 +1090,9 @@ begin
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv7-ultibo\rtl"';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -989,12 +1101,120 @@ begin
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
-       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
-       //WorkBuffer:=WorkBuffer + ' CROSSBINDIR=' + StripTrailingSlash(CompilerPath) + '/bin/win32-arm-none'; //Not required due to arm-ultibo- prefix on as/ld etc
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
-       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/ppcrossarm.exe';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
        WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/packages' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+    end;
+
+   {Check ARMv8}
+   if PlatformARMv8 then
+    begin
+     {Check RTL}
+     if BuildRTL then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo Building ARMv8 RTL' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo ==================' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {RTL Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {RTL}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {RTL Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/rtl' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+
+     {Check Packages}
+     if BuildPackages then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo Building ARMv8 Packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo =======================' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {RTL Clean (To remove units from \rtl\units)}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {Packages Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {Packages}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv8-ultibo\rtl"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       {Packages Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_BASEDIR=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/packages' + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
@@ -1054,10 +1274,11 @@ begin
  try
   if Length(SourcePath) = 0 then Exit;
   if Length(InstallPath) = 0 then Exit;
+  if Length(CompilerName) = 0 then Exit;
   if Length(CompilerPath) = 0 then Exit;
   if Length(CompilerVersion) = 0 then Exit;
   if not(BuildRTL) and not(BuildPackages) then Exit;
-  if not(PlatformARMv6) and not(PlatformARMv7) then Exit;
+  if not(PlatformARMv6) and not(PlatformARMv7) and not(PlatformARMv8) then Exit;
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + '__buildrtl.bat';

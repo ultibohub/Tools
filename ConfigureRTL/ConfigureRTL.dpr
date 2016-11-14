@@ -43,6 +43,7 @@ Configure RTL
   RPI.CFG
   RPI2.CFG
   RPI3.CFG
+  QEMUVPB.CFG
 
   environmentoptions.xml
   
@@ -117,6 +118,9 @@ begin
 
        {Edit RPI3.CFG}
        EditConfiguration('RPI3.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       {Edit QEMUVPB.CFG}
+       EditConfiguration('QEMUVPB.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 
        {Create environmentoptions.xml}
        CreateOptions('environmentoptions.xml',AddTrailingSlash(InstallPath),AddTrailingSlash(CompilerPath),LazarusVersion,LazarusVersionNo);

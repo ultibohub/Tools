@@ -15,6 +15,8 @@ ConfigureRTL - A utility used by the installer to update the FPC and Lazarus con
 
 FontBuilder - A tool to convert common bitmap fonts to a pascal unit for inclusion in projects
 
+QEMULauncher - A tool to load an Ultibo project into a QEMU machine
+
 TimezoneBuilder - A tool to compile world timezone information into a format suitable for the Ultibo timezone unit
 
 UFontCreator - A tool to convert any Windows font into a file describing it as a bitmap of fixed width and height

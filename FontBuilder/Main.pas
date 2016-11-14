@@ -942,9 +942,50 @@ end;
 
 procedure TfrmMain.FormShow(Sender: TObject);
 var
+ Scale:Double;
  Count:Integer;
 begin
  {}
+ {Check PixelsPerInch}
+ if PixelsPerInch > 96 then
+  begin
+   {Calculate Scale}
+   Scale:=(PixelsPerInch / 96);
+
+   {Disable Anchors}
+   txtSource.Anchors:=[akLeft,akTop];
+   cmdSource.Anchors:=[akLeft,akTop];
+   cmdOpen.Anchors:=[akLeft,akTop];
+   cmdExport.Anchors:=[akLeft,akTop];
+
+   {Resize Form}
+   Width:=Trunc(Width * Scale);
+   Height:=Trunc(Height * Scale);
+
+   {Adjust Text}
+   txtSource.Width:=Trunc(685 * Scale);
+
+   {Adjust Button}
+   cmdSource.Top:=txtSource.Top;
+   cmdSource.Height:=txtSource.Height;
+   cmdSource.Width:=cmdSource.Height;
+
+   {Move Buttons}
+   cmdSource.Left:=pnlMain.Width - Trunc(53 * Scale);  {824 - 771 = 53}
+   cmdOpen.Left:=pnlMain.Width - Trunc(220 * Scale);   {824 - 604 = 220}
+   cmdExport.Left:=pnlMain.Width - Trunc(136 * Scale); {824 - 688 = 136}
+
+   {Enable Anchors}
+   txtSource.Anchors:=[akLeft,akTop,akRight];
+   cmdSource.Anchors:=[akTop,akRight];
+   cmdOpen.Anchors:=[akTop,akRight];
+   cmdExport.Anchors:=[akTop,akRight];
+
+   {Resize Image}
+   FBitmap.Width:=imgMain.ClientWidth;
+   FBitmap.Height:=imgMain.ClientHeight;
+  end;
+ 
  cmbFormat.Clear;
  for Count:=0 to FONT_FORMAT_DISPLAY_MAX do
   begin

@@ -101,9 +101,32 @@ end;
 {==============================================================================}
 
 procedure TfrmMain.FormShow(Sender: TObject);
+var
+ Scale:Double;
 begin
  {}
+ {Check PixelsPerInch}
+ if PixelsPerInch > 96 then
+  begin
+   {Calculate Scale}
+   Scale:=(PixelsPerInch / 96);
 
+   {Disable Anchors}
+   cmdBuild.Anchors:=[akLeft,akTop];
+   cmdExit.Anchors:=[akLeft,akTop];
+
+   {Resize Form}
+   Width:=Trunc(Width * Scale);
+   Height:=Trunc(Height * Scale);
+
+   {Move Buttons}
+   cmdBuild.Left:=pnlMain.Width - Trunc(171 * Scale); {663 - 492 = 171}
+   cmdExit.Left:=pnlMain.Width - Trunc(87 * Scale);  {663 - 576 = 87}
+
+   {Enable Anchors}
+   cmdBuild.Anchors:=[akRight,akBottom];
+   cmdExit.Anchors:=[akRight,akBottom];
+  end;
 end;
 
 {==============================================================================}

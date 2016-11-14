@@ -94,6 +94,7 @@ type
     txtUnitName: TEdit;
     procedure cmdFileNameClick(Sender: TObject);
     procedure txtFileNameChange(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
@@ -175,6 +176,21 @@ begin
 
    Result:=True;
   end;
+end;
+
+{==============================================================================}
+
+procedure TfrmExport.FormShow(Sender: TObject);
+begin
+ {}
+ {Check PixelsPerInch}
+ if PixelsPerInch > 96 then
+  begin
+   {Adjust Button}
+   cmdFileName.Top:=txtFileName.Top;
+   cmdFileName.Height:=txtFileName.Height;
+   cmdFileName.Width:=cmdFileName.Height;
+ end;
 end;
 
 {==============================================================================}
