@@ -9,6 +9,8 @@ The source is available by downloading or cloning this repository, to download a
 
 Current tools and utilities:
 
+Bin2Type - A utility to turn any binary file into a pascal variable which can be embedded in your project
+
 BuildRTL - The Ultibo RTL Builder tool
 
 ConfigureRTL - A utility used by the installer to update the FPC and Lazarus configuratgion

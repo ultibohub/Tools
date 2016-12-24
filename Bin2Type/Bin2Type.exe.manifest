@@ -3,10 +3,10 @@
 <assemblyIdentity
     version="1.0.0.0"
     processorArchitecture="X86"
-    name="Ultibo.QEMULauncher"
+    name="Ultibo.Bin2Type"
     type="win32"
 />
-<description>Ultibo QEMU Launcher</description>
+<description>Ultibo Binary to Type</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity
