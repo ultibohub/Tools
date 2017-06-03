@@ -453,6 +453,7 @@ begin
        ExitCode:=STILL_ACTIVE;
        while GetExitCodeProcess(ProcessInformation.hProcess,ExitCode) do
         begin
+         Sleep(1);
          Application.ProcessMessages;
          if ExitCode <> STILL_ACTIVE then Break;
         end;
