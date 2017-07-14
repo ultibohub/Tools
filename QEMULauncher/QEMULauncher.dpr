@@ -57,6 +57,12 @@ QEMU Launcher
  ExtraParams - Any extra parameters to pass to QEMU on launch (Default: <Blank>)
  CommandLine - The command line parameters to pass to the Ultibo application (Default: <Blank>)
 
+
+ A QEMULauncher.ini file can also be created in the same directory as a the project file (the .lpi file)
+ and used to provide project specific parameters such as network settings or disk images to attach.
+
+ Any settings contained in a QEMULauncher.ini file in the project directory will override the same settings
+ in the default QEMULauncher.ini file.
 }
 
 program QEMULauncher;
@@ -78,6 +84,7 @@ begin
    Launch:=TQEMULaunch.Create;
    Launch.LoadConfig;
    Launch.LoadParams;
+   Launch.LoadProjectConfig;
    Launch.Launch;
    Launch.Free;
   end

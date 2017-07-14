@@ -57,6 +57,12 @@ QEMU Launcher
  ExtraParams - Any extra parameters to pass to QEMU on launch (Default: <Blank>)
  CommandLine - The command line parameters to pass to the Ultibo application (Default: <Blank>)
 
+ 
+ A QEMULauncher.ini file can also be created in the same directory as a the project file (the .lpi file)
+ and used to provide project specific parameters such as network settings or disk images to attach.
+
+ Any settings contained in a QEMULauncher.ini file in the project directory will override the same settings
+ in the default QEMULauncher.ini file.
 }
 
 unit Main;
@@ -97,6 +103,7 @@ type
 
    function LoadConfig:Boolean;
    function LoadParams:Boolean;
+   function LoadProjectConfig:Boolean;
   end;
 
   TfrmMain = class(TForm)
@@ -181,7 +188,7 @@ function ParameterValueEx(const AParameter:String;APlus,AMinus:Boolean):String;
 function ParameterExists(const AParameter:String):Boolean;
 function ParameterExistsEx(const AParameter:String;APlus,AMinus:Boolean):Boolean;
 
-function StartProgramEx(const ACommand:String;AWait,ANoShow:Boolean):Boolean;
+function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):Boolean;
 
 implementation
 
@@ -420,10 +427,11 @@ end;
 
 {==============================================================================}
 
-function StartProgramEx(const ACommand:String;AWait,ANoShow:Boolean):Boolean;
+function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):Boolean;
 var
+ Command:String;
+ Directory:String;
  OldValue:Pointer;
- WorkBuffer:String;
  ExitCode:LongWord;
  StartupInfo:TStartupInfo;
  ProcessInformation:TProcessInformation;
@@ -433,7 +441,8 @@ begin
  try
   Wow64DisableWow64FsRedirection(OldValue);
   try
-   WorkBuffer:=ACommand;
+   Command:=ACommand;
+   Directory:=ADirectory;
 
    FillChar(StartupInfo,SizeOf(StartupInfo),#0);
    StartupInfo.cb:=SizeOf(TStartupInfo);
@@ -441,10 +450,10 @@ begin
     begin
      StartupInfo.dwFlags:=STARTF_USESHOWWINDOW;
      StartupInfo.wShowWindow:=SW_HIDE;
-    end; 
+    end;
 
    FillChar(ProcessInformation,SizeOf(ProcessInformation),#0);
-   if CreateProcess(nil,PChar(WorkBuffer),nil,nil,False,0,nil,nil,StartupInfo,ProcessInformation) then
+   if CreateProcess(nil,PChar(Command),nil,nil,False,0,nil,PChar(Directory),StartupInfo,ProcessInformation) then
     begin
      CloseHandle(ProcessInformation.hThread);
 
@@ -774,7 +783,7 @@ begin
       Command:=Command + ' ' + ExtraParams;
 
       {Start Program}
-      Result:=StartProgramEx(Command,True,False);
+      Result:=StartProgramEx(Command,StripTrailingSlash(ProjectPath),True,False);
      end
     else
      begin
@@ -855,6 +864,63 @@ begin
 end;
 
 {==============================================================================}
+
+function TQEMULaunch.LoadProjectConfig:Boolean;
+var
+ Section:String;
+ Filename:String;
+ IniFile:TIniFile;
+ WorkBuffer:String;
+ ProjectPath:String;
+begin
+ {}
+ Result:=False;
+ try
+  {Get Path}
+  ProjectPath:=ExtractFileDir(Project);
+
+  {Get Filename}
+  Filename:=AddTrailingSlash(ProjectPath) + ExtractFileName(ChangeFileExt(Application.ExeName,'.ini'));
+
+  {Check File}
+  if FileExists(Filename) then
+   begin
+    IniFile:=TIniFile.Create(Filename);
+    try
+     Section:='QEMULauncher';
+
+     {Note: Any parameters from QEMULauncher.ini in the project directory override those in the default QEMULauncher.ini}
+     {Get Path}
+     WorkBuffer:=IniFile.ReadString(Section,'Path','');
+     if Length(WorkBuffer) <> 0 then Path:=WorkBuffer;
+
+     {Get SystemArm}
+     WorkBuffer:=IniFile.ReadString(Section,'SystemArm','');
+     if Length(WorkBuffer) <> 0 then SystemArm:=WorkBuffer;
+
+     {Get SystemAarch64}
+     WorkBuffer:=IniFile.ReadString(Section,'SystemAarch64','');
+     if Length(WorkBuffer) <> 0 then SystemAarch64:=WorkBuffer;
+
+     {Get ExtraParams}
+     WorkBuffer:=IniFile.ReadString(Section,'ExtraParams','');
+     if Length(WorkBuffer) <> 0 then ExtraParams:=WorkBuffer;
+
+     {Get CommandLine}
+     WorkBuffer:=IniFile.ReadString(Section,'CommandLine','');
+     if Length(WorkBuffer) <> 0 then CommandLine:=WorkBuffer;
+    finally
+     IniFile.Free;
+    end;
+   end;
+
+  Result:=True;
+ except
+  {}
+ end;
+end;
+
+{==============================================================================}
 {==============================================================================}
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -863,6 +929,7 @@ begin
  FLaunch:=TQEMULaunch.Create;
  FLaunch.LoadConfig;
  FLaunch.LoadParams;
+ FLaunch.LoadProjectConfig;
 end;
 
 {==============================================================================}
