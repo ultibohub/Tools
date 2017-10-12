@@ -1,3 +1,7 @@
+# Exclude installer FPC folder containing stable release files
+# These are zipped and uploaded as releases on GitHub only
+Installer/Core/FPC/*
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
@@ -24,5 +28,6 @@ $RECYCLE.BIN/
 *.o
 *.ppu
 *.fpm
+
 
 
