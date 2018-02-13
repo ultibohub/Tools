@@ -17,4 +17,4 @@ For fonts where the bits per row is greater than one byte both little endian and
 This tool currently supports converting PC Screen Fonts (PSF) into a pascal unit suitable for including in an Ultibo project. Additional formats will be supported in future.
 
 
-Compiled with Delphi (Convertable to FPC/Lazarus)
+Compiled with Delphi (Convertible to FPC/Lazarus)

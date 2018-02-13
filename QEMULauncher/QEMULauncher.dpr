@@ -71,7 +71,7 @@ uses
   Forms,
   Main in 'Main.pas' {frmMain};
 
-{$R QEMULAUNCHERMANIFEST.RES}
+{$R QEMULauncherManifest.RES}
 {$R *.RES}
 
 var

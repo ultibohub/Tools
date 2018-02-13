@@ -43,7 +43,7 @@ uses
   Forms,
   Main in 'Main.pas' {frmMain};
 
-{$R BIN2TYPEMANIFEST.RES}
+{$R Bin2TypeManifest.RES}
 {$R *.RES}
 
 begin

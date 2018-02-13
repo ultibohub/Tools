@@ -20,4 +20,4 @@ RPI3.CFG
 environmentoptions.xml
 
 
-Compiled with Delphi (Convertable to FPC/Lazarus)
+Compiled with Delphi (Convertible to FPC/Lazarus)

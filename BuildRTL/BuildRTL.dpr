@@ -95,7 +95,7 @@ uses
   Forms,
   Main in 'Main.pas' {frmMain};
 
-{$R BUILDRTLMANIFEST.RES}      
+{$R BuildRTLManifest.RES}      
 {$R *.RES}
 
 begin

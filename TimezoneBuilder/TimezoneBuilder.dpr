@@ -43,7 +43,7 @@ uses
   Forms,
   Main in 'Main.pas' {frmMain};
 
-{$R TIMEZONEBUILDERMANIFEST.RES}  
+{$R TimezoneBuilderManifest.RES}  
 {$R *.RES}
 
 begin

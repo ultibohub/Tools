@@ -9,5 +9,5 @@ While the tool is designed to determine the correct paths and locations without 
 See the header of the BuildRTL.dpr project file for details of the INI file format and available parameters.
 
 
-Compiled with Delphi (Convertable to FPC/Lazarus)
+Compiled with Delphi (Convertible to FPC/Lazarus)
 

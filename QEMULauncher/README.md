@@ -11,4 +11,4 @@ While the tool is designed to determine the required information without configu
 See the header of the QEMULauncher.dpr project file for details of the INI file format and available parameters.
 
 
-Compiled with Delphi (Convertable to FPC/Lazarus)
+Compiled with Delphi (Convertible to FPC/Lazarus)

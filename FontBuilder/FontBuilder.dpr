@@ -76,7 +76,7 @@ uses
   Main in 'Main.pas' {frmMain},
   DlgExport in 'DlgExport.pas' {frmExport};
 
-{$R FONTBUILDERMANIFEST.RES}  
+{$R FontBuilderManifest.RES}  
 {$R *.RES}
 
 begin
