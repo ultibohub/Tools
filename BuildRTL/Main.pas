@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2018 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -659,6 +659,27 @@ begin
    chkARMv8.Anchors:=[akLeft,akTop,akRight];
    cmdBuild.Anchors:=[akTop,akRight];
    cmdExit.Anchors:=[akTop,akRight];
+  end;
+
+ {Check Build Button}
+ if (cmdBuild.Left + cmdBuild.Width) > Width then
+  begin
+   {Adjust Build Button}
+   cmdBuild.Left:=ClientWidth - 100; {907 - 807 = 100}
+  end;
+
+ {Check Exit Button}
+ if (cmdExit.Left + cmdExit.Width) > Width then
+  begin
+   {Adjust Exit Button}
+   cmdExit.Left:=ClientWidth - 100; {907 - 807 = 100}
+  end;
+
+ {Check Main Label}
+ if (lblMain.Left + lblMain.Width) >= cmdBuild.Left then
+  begin
+    {Adjust Main Label}
+    lblMain.Width:=(cmdBuild.Left - lblMain.Left) - 100;
   end;
 end;
 
