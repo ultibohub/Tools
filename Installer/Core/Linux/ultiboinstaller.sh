@@ -453,6 +453,7 @@ echo "-CfVFPV2" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv6-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv6-ultibo/packages" >> $CONFIGFILE
@@ -468,6 +469,7 @@ echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI2" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
@@ -483,6 +485,7 @@ echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI3" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
@@ -498,6 +501,7 @@ echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dQEMUVPB" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
