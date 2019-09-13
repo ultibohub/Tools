@@ -21,7 +21,7 @@ echo "This installation will download the sources for:"
 echo "  Ultibo core"
 echo "  Ultibo examples"
 echo "  Free Pascal (Ultibo edition)"
-echo "  Lazarus (Ultibo edition)"
+echo "  Lazarus IDE (Ultibo edition)"
 echo
 echo "Then it will build all of the above, this will take several"
 echo "minutes to complete depending on the speed of your system."
@@ -58,8 +58,8 @@ echo "These can be installed on Debian based distributions using:"
 echo
 echo "sudo apt-get install build-essential unzip"
 echo
-echo "Lazarus requires the GTK2 and X11 dev packages which can"
-echo "be installed on Debian based distributions by using:"
+echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
+echo "can be installed on Debian based distributions by using:"
 echo
 echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\" 
 echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
@@ -226,7 +226,7 @@ while true; do
 
 	# If folder already exists ask to remove it
 	if [ -d "$EXPAND" ]; then
-		echo "Directory already exist"
+		echo "Directory already exists"
 		echo -n "Remove the entire folder and overwrite? (y,n): "
 		read CHOICE
 		case $CHOICE in
@@ -246,11 +246,53 @@ while true; do
 	break
 done
 
-# Ask for permission to create a local application shortcut
-echo
-echo "After install do you want a shortcut created in:"
-read -r -p "$HOME/.local/share/applications (y/n)? " SHORTCUT
+# Ask to install Lazarus
 echo 
+read -r -p "Do you want to build and install the Lazarus IDE (y/n)? " REPLY
+
+case $REPLY in
+    [yY][eE][sS]|[yY]) 
+		LAZARUS="Y"
+        echo
+		;;
+    *)
+		LAZARUS="N"
+        echo
+		;;
+esac
+
+if [ "$LAZARUS" = "Y" ]; then
+    # Ask for permission to create a local application shortcut
+    echo 
+    echo "After install do you want a shortcut created in:"
+    read -r -p "$HOME/.local/share/applications (y/n)? " REPLY
+    
+    case $REPLY in
+        [yY][eE][sS]|[yY]) 
+            SHORTCUT="Y"
+            echo
+            ;;
+        *)
+            SHORTCUT="N"
+            echo
+            ;;
+    esac
+fi
+
+# Ask to build Examples
+echo
+read -r -p "Do you want to build the Hello World examples (y/n)? " REPLY
+
+case $REPLY in
+    [yY][eE][sS]|[yY]) 
+		EXAMPLES="Y"
+        echo
+		;;
+    *)
+		EXAMPLES="N"
+		echo
+		;;
+esac
 
 # Block comment for testing
 : <<'COMMENT'
@@ -333,9 +375,11 @@ download "$BASE/downloads/FPC.zip" $URL/FPC/archive/master.zip
 exitFailure
 
 # Download Lazarus (Ultibo edition)
-echo "Downloading Lazarus (Ultibo edition)"
-download "$BASE/downloads/Lazarus.zip" $URL/Lazarus/archive/master.zip
-exitFailure
+if [ "$LAZARUS" = "Y" ]; then
+    echo "Downloading Lazarus (Ultibo edition)"
+    download "$BASE/downloads/Lazarus.zip" $URL/Lazarus/archive/master.zip
+    exitFailure
+fi
 
 # Unzip Ultibo core
 echo "Extracting Ultibo core"
@@ -350,8 +394,10 @@ echo "Extracting Free Pascal (Ultibo edition)"
 unzip -q downloads/FPC.zip -d downloads
 
 # Unzip Lazarus (Ultibo edition)
-echo "Extracting Lazarus (Ultibo edition)"
-unzip -q downloads/Lazarus.zip -d downloads
+if [ "$LAZARUS" = "Y" ]; then
+    echo "Extracting Lazarus (Ultibo edition)"
+    unzip -q downloads/Lazarus.zip -d downloads
+fi
 
 # Move files to correct locations
 mv downloads/FPC-master $BASE/fpc
@@ -359,7 +405,9 @@ mv downloads/Core-master/source/rtl/ultibo $BASE/fpc/source/rtl/ultibo
 mv downloads/Core-master/source/packages/ultibounits $BASE/fpc/source/packages/ultibounits
 mv downloads/Core-master/units $BASE/fpc/units
 mv downloads/Examples-master $BASE/examples
-mv downloads/Lazarus-master/* $BASE
+if [ "$LAZARUS" = "Y" ]; then
+    mv downloads/Lazarus-master/* $BASE
+fi
 rm -rf $BASE/examples/Synapse
 
 # Build the Free Pascal (Ultibo edition) compiler
@@ -508,103 +556,131 @@ echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
 
 # Build Lazarus
-# Create the missing Package.fpc for regexpr
-PACKAGEFILE="$BASE/fpc/lib/fpc/$FPC_BUILD/units/$CPU-linux/regexpr/Package.fpc"
-echo "[package]" > $PACKAGEFILE
-echo "name=regexpr" >> $PACKAGEFILE
-echo "version=$FPC_BUILD" >> $PACKAGEFILE
-echo "[require]" >> $PACKAGEFILE
-echo "packages_linux_$CPU=" >> $PACKAGEFILE
+if [ "$LAZARUS" = "Y" ]; then
+    echo "Building Lazarus IDE"
+    # Create the missing Package.fpc for regexpr
+    PACKAGEFILE="$BASE/fpc/lib/fpc/$FPC_BUILD/units/$CPU-linux/regexpr/Package.fpc"
+    echo "[package]" > $PACKAGEFILE
+    echo "name=regexpr" >> $PACKAGEFILE
+    echo "version=$FPC_BUILD" >> $PACKAGEFILE
+    echo "[require]" >> $PACKAGEFILE
+    echo "packages_linux_$CPU=" >> $PACKAGEFILE
 
-# Add the FPCDIR variable
-export FPCDIR=$BASE/fpc/lib/fpc/$FPC_BUILD
+    # Add the FPCDIR variable
+    export FPCDIR=$BASE/fpc/lib/fpc/$FPC_BUILD
 
-# Update the Makefiles
-cd $BASE
-fpcmake -T$CPU-linux -v
-exitFailure
-cd ide
-fpcmake -T$CPU-linux -v
-exitFailure
-cd ../components
-fpcmake -T$CPU-linux -v
-exitFailure
-cd ../tools
-fpcmake -T$CPU-linux -v
-exitFailure
-cd ..
+    # Update the Makefiles
+    cd $BASE
+    fpcmake -T$CPU-linux -v
+    exitFailure
+    cd ide
+    fpcmake -T$CPU-linux -v
+    exitFailure
+    cd ../components
+    fpcmake -T$CPU-linux -v
+    exitFailure
+    cd ../tools
+    fpcmake -T$CPU-linux -v
+    exitFailure
+    cd ..
 
-# Build the Lazarus IDE
-make clean all OPT="@$BASE/fpc/bin/fpc.cfg"
-exitFailure
+    # Build the Lazarus IDE
+    make clean all OPT="@$BASE/fpc/bin/fpc.cfg"
+    exitFailure
 
-# Restore our path
-export PATH=$OLDPATH
+    # Restore our path
+    export PATH=$OLDPATH
 
-# Create a Lazarus shortcut file
-SHORTCUTFILE="$BASE/ultibo.desktop"
-echo "[Desktop Entry]" > $SHORTCUTFILE
-echo "Name=Lazarus IDE (Ultibo Edition)" >> $SHORTCUTFILE
-echo "Comment=A free pascal platform for bare metal development" >> $SHORTCUTFILE
-echo "Exec=$BASE/lazarus.sh" >> $SHORTCUTFILE
-echo "Icon=$BASE/images/icons/lazarus.ico" >> $SHORTCUTFILE
-echo "Terminal=false" >> $SHORTCUTFILE
-echo "Type=Application" >> $SHORTCUTFILE
-echo "Categories=Development;IDE;" >> $SHORTCUTFILE
-chmod +x $SHORTCUTFILE
+    # Create a Lazarus shortcut file
+    SHORTCUTFILE="$BASE/ultibo.desktop"
+    echo "[Desktop Entry]" > $SHORTCUTFILE
+    echo "Name=Lazarus IDE (Ultibo Edition)" >> $SHORTCUTFILE
+    echo "Comment=A free pascal platform for bare metal development" >> $SHORTCUTFILE
+    echo "Exec=$BASE/lazarus.sh" >> $SHORTCUTFILE
+    echo "Icon=$BASE/images/icons/lazarus.ico" >> $SHORTCUTFILE
+    echo "Terminal=false" >> $SHORTCUTFILE
+    echo "Type=Application" >> $SHORTCUTFILE
+    echo "Categories=Development;IDE;" >> $SHORTCUTFILE
+    chmod +x $SHORTCUTFILE
 
-# Create a Lazarus startup file
-STARTUPFILE="$BASE/lazarus.sh"
-echo "export PATH=$BASE/fpc/bin:\$PATH" > $STARTUPFILE
-echo "export PPC_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
-echo "$BASE/lazarus" >> $STARTUPFILE
-chmod +x $STARTUPFILE
+    # Create a Lazarus startup file
+    STARTUPFILE="$BASE/lazarus.sh"
+    echo "export PATH=$BASE/fpc/bin:\$PATH" > $STARTUPFILE
+    echo "export PPC_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
+    echo "$BASE/lazarus" >> $STARTUPFILE
+    chmod +x $STARTUPFILE
 
-# Create a Lazarus config file
-CONFIGFILE="$BASE/lazarus.cfg"
-echo "#--disabledocking" > $CONFIGFILE
+    # Create a Lazarus config file
+    CONFIGFILE="$BASE/lazarus.cfg"
+    echo "#--disabledocking" > $CONFIGFILE
 
-# Create a Lazarus options file
-OPTIONSFILE="$BASE/environmentoptions.xml"
-echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $OPTIONSFILE
-echo "<CONFIG>" >> $OPTIONSFILE
-echo "  <EnvironmentOptions>" >> $OPTIONSFILE
-echo "    <Version Value=\"109\" Lazarus=\"1.6U\"/>" >> $OPTIONSFILE
-echo "    <LazarusDirectory Value=\"$BASE\">" >> $OPTIONSFILE
-echo "    </LazarusDirectory>" >> $OPTIONSFILE
-echo "    <CompilerFilename Value=\"$BASE/fpc/bin/fpc\">" >> $OPTIONSFILE
-echo "    </CompilerFilename>" >> $OPTIONSFILE
-echo "    <FPCSourceDirectory Value=\"$BASE/fpc/source\">" >> $OPTIONSFILE
-echo "    </FPCSourceDirectory>" >> $OPTIONSFILE
-echo "    <MakeFilename Value=\"make\">" >> $OPTIONSFILE
-echo "    </MakeFilename>" >> $OPTIONSFILE
-echo "    <TestBuildDirectory Value=\"~/tmp/\">" >> $OPTIONSFILE
-echo "    </TestBuildDirectory>" >> $OPTIONSFILE
-echo "    <Debugger Class=\"TGDBMIDebugger\"/>" >> $OPTIONSFILE
-echo "    <DebuggerFilename Value=\"gdb\">" >> $OPTIONSFILE
-echo "    </DebuggerFilename>" >> $OPTIONSFILE
-echo "  </EnvironmentOptions>" >> $OPTIONSFILE
-echo "</CONFIG>" >> $OPTIONSFILE
+    # Create a Lazarus options file
+    OPTIONSFILE="$BASE/environmentoptions.xml"
+    echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $OPTIONSFILE
+    echo "<CONFIG>" >> $OPTIONSFILE
+    echo "  <EnvironmentOptions>" >> $OPTIONSFILE
+    echo "    <Version Value=\"109\" Lazarus=\"1.6U\"/>" >> $OPTIONSFILE
+    echo "    <LazarusDirectory Value=\"$BASE\">" >> $OPTIONSFILE
+    echo "    </LazarusDirectory>" >> $OPTIONSFILE
+    echo "    <CompilerFilename Value=\"$BASE/fpc/bin/fpc\">" >> $OPTIONSFILE
+    echo "    </CompilerFilename>" >> $OPTIONSFILE
+    echo "    <FPCSourceDirectory Value=\"$BASE/fpc/source\">" >> $OPTIONSFILE
+    echo "    </FPCSourceDirectory>" >> $OPTIONSFILE
+    echo "    <MakeFilename Value=\"make\">" >> $OPTIONSFILE
+    echo "    </MakeFilename>" >> $OPTIONSFILE
+    echo "    <TestBuildDirectory Value=\"~/tmp/\">" >> $OPTIONSFILE
+    echo "    </TestBuildDirectory>" >> $OPTIONSFILE
+    echo "    <Debugger Class=\"TGDBMIDebugger\"/>" >> $OPTIONSFILE
+    echo "    <DebuggerFilename Value=\"gdb\">" >> $OPTIONSFILE
+    echo "    </DebuggerFilename>" >> $OPTIONSFILE
+    echo "  </EnvironmentOptions>" >> $OPTIONSFILE
+    echo "</CONFIG>" >> $OPTIONSFILE
 
-# Install the shortcut
-case $SHORTCUT in
-    [yY][eE][sS]|[yY]) 
-		if type desktop-file-install > /dev/null; then
-			desktop-file-install --dir="$HOME/.local/share/applications" "$BASE/ultibo.desktop"
-		else
-			cp "$BASE/ultibo.desktop" "$HOME/.local/share/applications"
-		fi
-		echo
-		;;
-    *)
-		echo 
-		;;
-esac
+    # Install the shortcut
+    if [ "$SHORTCUT" = "Y" ]; then
+        if type desktop-file-install > /dev/null; then
+            desktop-file-install --dir="$HOME/.local/share/applications" "$BASE/ultibo.desktop"
+        else
+            cp "$BASE/ultibo.desktop" "$HOME/.local/share/applications"
+        fi
+        echo
+    fi
 
-# Check for Lazarus options file
-if [ ! -f $HOME/.ultibo/core/environmentoptions.xml ]; then
-    mkdir -p $HOME/.ultibo/core
-    cp $BASE/environmentoptions.xml $HOME/.ultibo/core/environmentoptions.xml
+    # Check for Lazarus options file
+    if [ ! -f $HOME/.ultibo/core/environmentoptions.xml ]; then
+        mkdir -p $HOME/.ultibo/core
+        cp $BASE/environmentoptions.xml $HOME/.ultibo/core/environmentoptions.xml
+    fi
+else
+    # Restore our path
+    export PATH=$OLDPATH
+fi
+
+# Build Examples
+if [ "$EXAMPLES" = "Y" ]; then
+    echo "Building Hello World examples"
+    
+    echo
+    echo "Building Hello World for RPi"
+    cd $BASE/examples/01-HelloWorld/RPi
+    $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV6 -WpRPIB @$BASE/fpc/bin/RPI.CFG -O2 HelloWorld.lpr
+    
+    echo
+    echo "Building Hello World for RPi2"
+    cd $BASE/examples/01-HelloWorld/RPi2
+    $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI2B @$BASE/fpc/bin/RPI2.CFG -O2 HelloWorld.lpr
+    
+    echo
+    echo "Building Hello World for RPi3"
+    cd $BASE/examples/01-HelloWorld/RPi3
+    $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI3B @$BASE/fpc/bin/RPI3.CFG -O2 HelloWorld.lpr
+    
+    echo
+    echo "Building Hello World for QEMU"
+    cd $BASE/examples/01-HelloWorld/QEMU
+    $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpQEMUVPB @$BASE/fpc/bin/QEMUVPB.CFG -O2 HelloWorld.lpr
+    
+    cd $BASE  
 fi
 
 # Delete the temporary version of fpc stable
@@ -617,7 +693,17 @@ rm -rf $BASE/downloads
 echo 
 echo "Free Pascal and Lazarus (Ultibo edition) install complete"
 echo 
-echo "Launch Lazarus from the application shortcut or by using"
-echo "  $BASE/lazarus.sh"
+if [ "$LAZARUS" = "Y" ]; then
+    if [ "$SHORTCUT" = "Y" ]; then
+        echo "Launch Lazarus IDE from the application shortcut or by using"
+    else
+        echo "Launch Lazarus IDE by using"
+    
+    fi
+    echo "  $BASE/lazarus.sh"
+else
+    echo "Launch the FPC compiler by using"
+    echo "  $BASE/fpc/bin/fpc"
+fi
 echo "from the command line"
 echo 
