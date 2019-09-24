@@ -47,6 +47,21 @@ case $REPLY in
 		;;
 esac
 
+# Ask to install Lazarus
+echo 
+read -r -p "Do you want to build and install the Lazarus IDE (y/n)? " REPLY
+
+case $REPLY in
+    [yY][eE][sS]|[yY]) 
+		LAZARUS="Y"
+        echo
+		;;
+    *)
+		LAZARUS="N"
+        echo
+		;;
+esac
+
 clear
 echo "Free Pascal and Lazarus (Ultibo edition) prerequisites"
 echo "------------------------------------------------------"
@@ -58,13 +73,15 @@ echo "These can be installed on Debian based distributions using:"
 echo
 echo "sudo apt-get install build-essential unzip"
 echo
-echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
-echo "can be installed on Debian based distributions by using:"
-echo
-echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\" 
-echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
-echo "  libghc-x11-dev"
-echo
+if [ "$LAZARUS" = "Y" ]; then
+    echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
+    echo "can be installed on Debian based distributions by using:"
+    echo
+    echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\" 
+    echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
+    echo "  libghc-x11-dev"
+    echo
+fi
 echo "Cross compiling Ultibo applications from Linux requires the"
 echo "arm-none-eabi build of the binutils package, this can be"
 echo "installed on Debian based distributions using:"
@@ -126,14 +143,16 @@ function requirePackage() {
 	echo "$1 found"
 }
 
-# Require the following packages 
-if type "dpkg-query" > /dev/null; then
-	requirePackage "libgtk2.0-dev"
-	requirePackage "libcairo2-dev"
-	requirePackage "libpango1.0-dev"
-	requirePackage "libgdk-pixbuf2.0-dev"
-	requirePackage "libatk1.0-dev"
-	requirePackage "libghc-x11-dev"
+if [ "$LAZARUS" = "Y" ]; then
+    # Require the following packages 
+    if type "dpkg-query" > /dev/null; then
+        requirePackage "libgtk2.0-dev"
+        requirePackage "libcairo2-dev"
+        requirePackage "libpango1.0-dev"
+        requirePackage "libgdk-pixbuf2.0-dev"
+        requirePackage "libatk1.0-dev"
+        requirePackage "libghc-x11-dev"
+    fi
 fi
 
 # Require the following programs 
@@ -245,21 +264,6 @@ while true; do
 
 	break
 done
-
-# Ask to install Lazarus
-echo 
-read -r -p "Do you want to build and install the Lazarus IDE (y/n)? " REPLY
-
-case $REPLY in
-    [yY][eE][sS]|[yY]) 
-		LAZARUS="Y"
-        echo
-		;;
-    *)
-		LAZARUS="N"
-        echo
-		;;
-esac
 
 if [ "$LAZARUS" = "Y" ]; then
     # Ask for permission to create a local application shortcut
