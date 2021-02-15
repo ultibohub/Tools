@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux install script for Ultibo editions of FreePascal and Lazarus
 #
-# Based on the setup.sh script from http://getlazarus.org
+# Originally based on the setup.sh script from https://www.getlazarus.org
 
 # The full version number of the stable compiler and the one we are building
 FPC_STABLE=3.0.2
