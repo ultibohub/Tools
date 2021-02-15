@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2018 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -31,9 +31,9 @@ References
 RTL Builder
 ===========
 
- The RTL builder creates a Windows batch file which compiles the RTL and Packages
- for any of the supported architectures and displays the output in a window during
- the compile.
+ The RTL builder creates a batch file or shell script which compiles the RTL and
+ Packages for any of the supported architectures and displays the output in a
+ window during the compile.
 
  While the tool is designed to determine the correct paths and locations without
  configuration it does support creating a BuildRTL.ini file in the same directory
@@ -91,19 +91,49 @@ RTL Builder
 
 unit Main;
 
+{$MODE Delphi}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, IniFiles;
+  LCLIntf,
+  LCLType,
+  LMessages,
+  {$IFDEF WINDOWS}
+  Windows,
+  {$ENDIF}
+  Messages,
+  SysUtils,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  Dialogs,
+  StdCtrls,
+  ExtCtrls,
+  ComCtrls,
+  IniFiles;
 
 const
  LineEnd = Chr(13) + Chr(10); {CR LF}
  MarkerEnd = '!!!EndOfBuild!!!';
+ MarkerProgress = '!!!Progress'; {Suffix will be progress value as a percentage}
+ {$IFDEF WINDOWS}
+ SlashChar = '\';
+ BuildScript = '__buildrtl.bat';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ SlashChar = '/';
+ BuildScript = '__buildrtl.sh';
+ {$ENDIF}
 
 type
+
+  { TfrmMain }
+
   TfrmMain = class(TForm)
     mmoMain: TMemo;
+    progressMain: TProgressBar;
     sbMain: TStatusBar;
     pnlMain: TPanel;
     cmdExit: TButton;
@@ -152,11 +182,16 @@ type
 var
   frmMain: TfrmMain;
 
+{$IFDEF WINDOWS}
 function GetDosOutput(CommandLine: string; Work: string = 'C:\'): string;
 procedure CaptureConsoleOutput(const ACommand, AParameters: String; AMemo: TMemo);
 
 function ExecuteConsoleProcess(const ACommand,AParameters,AWorking:String;AMemo:TMemo):Boolean;
-function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo):Boolean;
+function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+{$ENDIF}
+{$IFDEF LINUX}
+function ExecuteShellProcess(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+{$ENDIF}
 
 {For details on how to capture command prompt output see:
 
@@ -171,14 +206,16 @@ function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:Str
 function AddTrailingSlash(const FilePath:String):String;
 function StripTrailingSlash(const FilePath:String):String;
 
+{$IFDEF WINDOWS}
 function IsWinNT6orAbove:Boolean;
+{$ENDIF}
 
 implementation
 
-{$R *.DFM}
+{$R *.lfm}
 
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 function GetDosOutput(CommandLine: string; Work: string = 'C:\'): string;
 {From: http://www.delphidabbler.com/tips/61}
 var
@@ -405,7 +442,7 @@ end;
 
 {==============================================================================}
 
-function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo):Boolean;
+function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
 {Modified from: CaptureConsoleOutput}
 var
  WorkDir:PChar;
@@ -426,6 +463,7 @@ begin
  {Check Parameters}
  if (Length(ACommand) = 0) and (Length(AParameters) = 0) then Exit;
  if AMemo = nil then Exit;
+ if AProgress = nil then Exit;
 
  {Setup Security Attributes}
  FillChar(SecurityAttributes,SizeOf(TSecurityAttributes),0);
@@ -517,7 +555,23 @@ begin
    end;
   end;
 end;
+{$ENDIF}
+{==============================================================================}
+{$IFDEF LINUX}
+function ExecuteShellProcess(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+begin
+ {}
+ Result:=False;
 
+ {Check Parameters}
+ if (Length(ACommand) = 0) and (Length(AParameters) = 0) then Exit;
+ if AMemo = nil then Exit;
+ if AProgress = nil then Exit;
+
+ //To Do //See: https://wiki.lazarus.freepascal.org/Executing_External_Programs#Reading_large_output
+
+end;
+{$ENDIF}
 {==============================================================================}
 
 function AddTrailingSlash(const FilePath:String):String;
@@ -529,9 +583,9 @@ begin
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] <> '\' then
+   if WorkBuffer[Length(WorkBuffer)] <> SlashChar then
     begin
-     Result:=WorkBuffer + '\';
+     Result:=WorkBuffer + SlashChar;
     end;
   end;
 end;
@@ -547,7 +601,7 @@ begin
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] = '\' then
+   if WorkBuffer[Length(WorkBuffer)] = SlashChar then
     begin
      Delete(WorkBuffer,Length(WorkBuffer),1);
      Result:=WorkBuffer;
@@ -556,7 +610,7 @@ begin
 end;
 
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 function IsWinNT6orAbove:Boolean;
 {Returns True for WindowsVista(6.0) or higher}
 var
@@ -570,7 +624,7 @@ begin
  if OsVersionInfo.dwPlatformId <> VER_PLATFORM_WIN32_NT then Exit;
  Result:=(OsVersionInfo.dwMajorVersion >= 6);
 end;
-
+{$ENDIF}
 {==============================================================================}
 {==============================================================================}
 
@@ -892,7 +946,7 @@ begin
   if Length(AARCH64Compiler) = 0 then AARCH64Compiler:=CompilerName;
 
   {Get Filename}
-  Filename:=AddTrailingSlash(SourcePath) + '__buildrtl.bat';
+  Filename:=AddTrailingSlash(SourcePath) + BuildScript;
   mmoMain.Lines.Add('  Build Script is ' + Filename);
   mmoMain.Lines.Add('');
 
@@ -1302,7 +1356,7 @@ begin
   if not(PlatformARMv6) and not(PlatformARMv7) and not(PlatformARMv8) then Exit;
 
   {Get Filename}
-  Filename:=AddTrailingSlash(SourcePath) + '__buildrtl.bat';
+  Filename:=AddTrailingSlash(SourcePath) + BuildScript;
   mmoMain.Lines.Add('  Build Script is ' + Filename);
   mmoMain.Lines.Add('');
 
@@ -1310,7 +1364,12 @@ begin
   if not FileExists(Filename) then Exit;
 
   {Execute Process}
-  if not ExecuteConsoleProcessEx('cmd.exe /c',Filename,SourcePath,MarkerEnd,mmoMain) then Exit;
+  {$IFDEF WINDOWS}
+  if not ExecuteConsoleProcessEx('cmd.exe /c',Filename,SourcePath,MarkerEnd,mmoMain,progressMain) then Exit;
+  {$ENDIF}
+  {$IFDEF LINUX}
+  if not ExecuteShellProcess('/bin/bash -c',Filename,SourcePath,MarkerEnd,mmoMain,progressMain) then Exit;
+  {$ENDIF}
 
   Result:=True;
  except

@@ -1,0 +1,160 @@
+object frmMain: TfrmMain
+  Left = 606
+  Height = 261
+  Top = 260
+  Width = 368
+  BorderStyle = bsDialog
+  Caption = 'Binary File to Type Definition'
+  ClientHeight = 261
+  ClientWidth = 368
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnHide = FormHide
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
+  object lblSource: TLabel
+    Left = 16
+    Height = 13
+    Top = 28
+    Width = 53
+    Caption = 'Source File'
+    ParentColor = False
+  end
+  object lblDest: TLabel
+    Left = 16
+    Height = 13
+    Top = 64
+    Width = 72
+    Caption = 'Destination File'
+    ParentColor = False
+  end
+  object lblOffset: TLabel
+    Left = 16
+    Height = 13
+    Top = 144
+    Width = 67
+    Caption = 'Starting Offset'
+    ParentColor = False
+  end
+  object lblSize: TLabel
+    Left = 16
+    Height = 13
+    Top = 180
+    Width = 89
+    Caption = 'Conversion Length'
+    ParentColor = False
+  end
+  object lblSize2: TLabel
+    Left = 208
+    Height = 13
+    Top = 180
+    Width = 75
+    Caption = '(0 = Convert All)'
+    ParentColor = False
+  end
+  object lblName: TLabel
+    Left = 16
+    Height = 13
+    Top = 108
+    Width = 55
+    Caption = 'Type Name'
+    ParentColor = False
+  end
+  object cmdConvert: TButton
+    Left = 196
+    Height = 25
+    Top = 225
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Convert'
+    OnClick = cmdConvertClick
+    TabOrder = 7
+  end
+  object cmdExit: TButton
+    Left = 280
+    Height = 25
+    Top = 225
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Exit'
+    OnClick = cmdExitClick
+    TabOrder = 8
+  end
+  object txtSource: TEdit
+    Left = 100
+    Height = 21
+    Top = 24
+    Width = 229
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = txtSourceChange
+    TabOrder = 0
+  end
+  object txtDest: TEdit
+    Left = 100
+    Height = 21
+    Top = 60
+    Width = 229
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = txtDestChange
+    TabOrder = 2
+  end
+  object txtOffset: TEdit
+    Left = 116
+    Height = 21
+    Top = 140
+    Width = 85
+    OnChange = txtOffsetChange
+    TabOrder = 5
+  end
+  object txtSize: TEdit
+    Left = 116
+    Height = 21
+    Top = 176
+    Width = 85
+    OnChange = txtSizeChange
+    TabOrder = 6
+  end
+  object cmdSource: TButton
+    Left = 332
+    Height = 21
+    Top = 24
+    Width = 21
+    Anchors = [akTop, akRight]
+    Caption = '...'
+    OnClick = cmdSourceClick
+    TabOrder = 1
+  end
+  object cmdDest: TButton
+    Left = 332
+    Height = 21
+    Top = 60
+    Width = 21
+    Anchors = [akTop, akRight]
+    Caption = '...'
+    OnClick = cmdDestClick
+    TabOrder = 3
+  end
+  object txtName: TEdit
+    Left = 116
+    Height = 21
+    Top = 104
+    Width = 237
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = txtNameChange
+    TabOrder = 4
+  end
+  object openMain: TOpenDialog
+    left = 8
+    top = 220
+  end
+  object saveMain: TSaveDialog
+    left = 40
+    top = 220
+  end
+end

@@ -1,0 +1,134 @@
+object frmMain: TfrmMain
+  Left = 514
+  Height = 668
+  Top = 202
+  Width = 923
+  Caption = 'Ultibo RTL Builder'
+  ClientHeight = 668
+  ClientWidth = 923
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnHide = FormHide
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
+  object mmoMain: TMemo
+    Left = 0
+    Height = 444
+    Top = 201
+    Width = 923
+    Align = alClient
+    Color = clBtnFace
+    ReadOnly = True
+    ScrollBars = ssBoth
+    TabOrder = 0
+  end
+  object sbMain: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 645
+    Width = 923
+    Panels = <>
+    SimplePanel = False
+  end
+  object pnlMain: TPanel
+    Left = 0
+    Height = 201
+    Top = 0
+    Width = 923
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 201
+    ClientWidth = 923
+    TabOrder = 2
+    object lblCompiler: TLabel
+      Left = 18
+      Height = 13
+      Top = 168
+      Width = 75
+      Caption = 'Compiler Output'
+      ParentColor = False
+    end
+    object lblPlatforms: TLabel
+      Left = 18
+      Height = 13
+      Top = 66
+      Width = 76
+      Caption = 'Select Platforms'
+      ParentColor = False
+    end
+    object lblMain: TLabel
+      Left = 18
+      Height = 39
+      Top = 18
+      Width = 697
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = False
+      Caption = 'This tool allows rebuilding of the Ultibo RTL if you have made changes to the source code or downloaded an updated RTL. Select the platforms below to rebuild and then click Build. The progress of the RTL build or any errors will be shown below.'
+      ParentColor = False
+      WordWrap = True
+    end
+    object cmdExit: TButton
+      Left = 821
+      Height = 25
+      Top = 66
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'Exit'
+      OnClick = cmdExitClick
+      TabOrder = 0
+    end
+    object cmdBuild: TButton
+      Left = 821
+      Height = 25
+      Top = 26
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'Build'
+      OnClick = cmdBuildClick
+      TabOrder = 1
+    end
+    object chkARMv6: TCheckBox
+      Left = 26
+      Height = 19
+      Top = 90
+      Width = 716
+      Anchors = [akTop, akLeft, akRight]
+      Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero)'
+      OnClick = chkARMv6Click
+      TabOrder = 2
+    end
+    object chkARMv7: TCheckBox
+      Left = 26
+      Height = 19
+      Top = 114
+      Width = 716
+      Anchors = [akTop, akLeft, akRight]
+      Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
+      OnClick = chkARMv7Click
+      TabOrder = 3
+    end
+    object chkARMv8: TCheckBox
+      Left = 26
+      Height = 19
+      Top = 138
+      Width = 716
+      Anchors = [akTop, akLeft, akRight]
+      Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
+      OnClick = chkARMv8Click
+      TabOrder = 4
+    end
+    object progressMain: TProgressBar
+      Left = 4
+      Height = 10
+      Top = 190
+      Width = 915
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 5
+    end
+  end
+end

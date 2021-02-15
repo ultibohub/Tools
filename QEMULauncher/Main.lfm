@@ -1,0 +1,124 @@
+object frmMain: TfrmMain
+  Left = 544
+  Height = 249
+  Top = 351
+  Width = 618
+  Caption = 'QEMU Launcher'
+  ClientHeight = 249
+  ClientWidth = 618
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
+  object lblProject: TLabel
+    Left = 20
+    Height = 13
+    Top = 20
+    Width = 52
+    Caption = 'Project File'
+    ParentColor = False
+  end
+  object lblCPU: TLabel
+    Left = 20
+    Height = 13
+    Top = 60
+    Width = 49
+    Caption = 'CPU Type'
+    ParentColor = False
+  end
+  object lblProcessor: TLabel
+    Left = 20
+    Height = 13
+    Top = 100
+    Width = 54
+    Caption = 'CPU Model'
+    ParentColor = False
+  end
+  object lblController: TLabel
+    Left = 20
+    Height = 13
+    Top = 140
+    Width = 55
+    Caption = 'Board Type'
+    ParentColor = False
+  end
+  object txtProject: TEdit
+    Left = 84
+    Height = 21
+    Top = 16
+    Width = 469
+    Anchors = [akTop, akLeft, akRight]
+    OnChange = txtProjectChange
+    TabOrder = 0
+  end
+  object cmdProject: TButton
+    Left = 556
+    Height = 23
+    Top = 15
+    Width = 23
+    Anchors = [akTop, akRight]
+    Caption = '...'
+    OnClick = cmdProjectClick
+    TabOrder = 1
+  end
+  object cmbCPU: TComboBox
+    Left = 84
+    Height = 21
+    Top = 56
+    Width = 145
+    ItemHeight = 13
+    OnChange = cmbCPUChange
+    Style = csDropDownList
+    TabOrder = 2
+  end
+  object cmbProcessor: TComboBox
+    Left = 84
+    Height = 21
+    Top = 96
+    Width = 145
+    ItemHeight = 13
+    OnChange = cmbProcessorChange
+    Style = csDropDownList
+    TabOrder = 3
+  end
+  object cmbController: TComboBox
+    Left = 84
+    Height = 21
+    Top = 136
+    Width = 145
+    ItemHeight = 13
+    OnChange = cmbControllerChange
+    Style = csDropDownList
+    TabOrder = 4
+  end
+  object cmdLaunch: TButton
+    Left = 416
+    Height = 25
+    Top = 165
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Launch'
+    OnClick = cmdLaunchClick
+    TabOrder = 5
+  end
+  object cmdClose: TButton
+    Left = 500
+    Height = 25
+    Top = 165
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Close'
+    OnClick = cmdCloseClick
+    TabOrder = 6
+  end
+  object openMain: TOpenDialog
+    left = 24
+    top = 160
+  end
+end

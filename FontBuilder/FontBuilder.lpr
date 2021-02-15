@@ -1,7 +1,7 @@
 {
 Ultibo Font Builder Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -71,15 +71,21 @@ Font Builder
 
 program FontBuilder;
 
+{$MODE Delphi}
+
 uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
   Forms,
+  Interfaces,
   Main in 'Main.pas' {frmMain},
   DlgExport in 'DlgExport.pas' {frmExport};
 
-{$R FontBuilderManifest.RES}  
-{$R *.RES}
+{$R *.res}
 
 begin
+  RequireDerivedFormResource:=True;
   Application.Initialize;
   Application.Title := 'Ultibo Font Builder';
   Application.CreateForm(TfrmMain, frmMain);

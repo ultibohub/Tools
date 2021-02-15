@@ -1,7 +1,7 @@
 {
 Ultibo Font Builder Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -71,11 +71,25 @@ Font Builder
 
 unit Main;
 
+{$MODE Delphi}
+{$WARN 4056 off : Conversion between ordinals and pointers is not portable}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ExtCtrls, ComCtrls, StdCtrls;
+  LCLIntf,
+  LCLType,
+  LMessages,
+  Messages,
+  SysUtils,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  Dialogs,
+  ExtCtrls,
+  ComCtrls,
+  StdCtrls;
 
 const
  {Format constants}
@@ -232,7 +246,7 @@ implementation
 
 uses DlgExport;
 
-{$R *.DFM}
+{$R *.lfm}
 
 {==============================================================================}
 
@@ -668,7 +682,7 @@ begin
   begin
    for Row:=0 to AHeight - 1 do
     begin
-     Current:=(PLongWord(LongWord(AData) + Offset + (Row * Increment))^ and Mask);
+     Current:=(PLongWord(PtrUInt(AData) + Offset + (Row * Increment))^ and Mask);
 
      if Row = 0 then
       begin
@@ -875,7 +889,7 @@ begin
      for Y:=0 to Height - 1 do
       begin
        {Get Row}
-       Current:=PLongWord(LongWord(Data) + Offset + (Y * Increment))^;
+       Current:=PLongWord(PtrUInt(Data) + Offset + (Y * Increment))^;
 
        if Increment > 1 then
         begin

@@ -1,0 +1,59 @@
+object frmMain: TfrmMain
+  Left = 521
+  Height = 669
+  Top = 134
+  Width = 679
+  Caption = 'Ultibo Timezone Builder'
+  ClientHeight = 669
+  ClientWidth = 679
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
+  object mmoMain: TMemo
+    Left = 0
+    Height = 620
+    Top = 0
+    Width = 679
+    Align = alClient
+    ScrollBars = ssVertical
+    TabOrder = 0
+  end
+  object pnlMain: TPanel
+    Left = 0
+    Height = 49
+    Top = 620
+    Width = 679
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 49
+    ClientWidth = 679
+    TabOrder = 1
+    object cmdBuild: TButton
+      Left = 506
+      Height = 25
+      Top = 10
+      Width = 75
+      Anchors = [akRight, akBottom]
+      Caption = 'Build'
+      OnClick = cmdBuildClick
+      TabOrder = 0
+    end
+    object cmdExit: TButton
+      Left = 590
+      Height = 25
+      Top = 10
+      Width = 75
+      Anchors = [akRight, akBottom]
+      Caption = 'Exit'
+      OnClick = cmdExitClick
+      TabOrder = 1
+    end
+  end
+end

@@ -1,7 +1,7 @@
 {
 Ultibo QEMU Launcher Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -67,11 +67,28 @@ QEMU Launcher
 
 unit Main;
 
+{$MODE Delphi}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, IniFiles;
+  {$IFDEF WINDOWS}
+  Windows,
+  {$ENDIF}
+  LCLIntf,
+  LCLType,
+  LMessages,
+  Messages,
+  SysUtils,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  Dialogs,
+  StdCtrls,
+  ExtCtrls,
+  ComCtrls,
+  IniFiles;
 
 type
   TQEMULaunch = class(TObject)
@@ -151,12 +168,15 @@ const
   'ARMV8');
 
  {From FPCControllerNames in definetemplates.pas}
- ControllerNames:array[0..5] of String = (
+ ControllerNames:array[0..8] of String = (
   'RPIA',
   'RPIB',
   'RPIZERO',
   'RPI2B',
+  'RPI3A',
   'RPI3B',
+  'RPI4B',
+  'RPI400',
   'QEMUVPB');
 
 type
@@ -192,7 +212,7 @@ function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):
 
 implementation
 
-{$R *.DFM}
+{$R *.lfm}
 
 {==============================================================================}
 {==============================================================================}
@@ -251,16 +271,23 @@ end;
 
 function AddTrailingSlash(const FilePath:String):String;
 var
+ SlashChar:Char;
  WorkBuffer:String;
 begin
  {}
+ {$IFDEF WINDOWS}
+ SlashChar:='\';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ SlashChar:='/';
+ {$ENDIF}
  WorkBuffer:=Trim(FilePath);
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] <> '\' then
+   if WorkBuffer[Length(WorkBuffer)] <> SlashChar then
     begin
-     Result:=WorkBuffer + '\';
+     Result:=WorkBuffer + SlashChar;
     end;
   end;
 end;
@@ -269,14 +296,21 @@ end;
 
 function StripTrailingSlash(const FilePath:String):String;
 var
+ SlashChar:Char;
  WorkBuffer:String;
 begin
  {}
+ {$IFDEF WINDOWS}
+ SlashChar:='\';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ SlashChar:='/';
+ {$ENDIF}
  WorkBuffer:=Trim(FilePath);
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] = '\' then
+   if WorkBuffer[Length(WorkBuffer)] = SlashChar then
     begin
      Delete(WorkBuffer,Length(WorkBuffer),1);
      Result:=WorkBuffer;
@@ -580,9 +614,21 @@ begin
     begin
      //Result:='kernel7.img'; //Not yet supported
     end
+   else if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='kernel7.img'; //Not yet supported
+    end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
      //Result:='kernel7.img'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='kernel7l.img'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
+    begin
+     //Result:='kernel7l.img'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
@@ -591,7 +637,19 @@ begin
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
-   if Uppercase(Controller) = 'RPI3B' then
+   if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='kernel8.img'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     //Result:='kernel8.img'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='kernel8.img'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
     begin
      //Result:='kernel8.img'; //Not yet supported
     end
@@ -627,9 +685,21 @@ begin
     begin
      //Result:='1024M'; //Not yet supported
     end
+   else if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='1024M'; //Not yet supported
+    end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
      //Result:='1024M'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='4096M'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
+    begin
+     //Result:='4096M'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
@@ -638,9 +708,21 @@ begin
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
-   if Uppercase(Controller) = 'RPI3B' then
+   if Uppercase(Controller) = 'RPI3A' then
     begin
      //Result:='1024M'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     //Result:='1024M'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='4096M'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
+    begin
+     //Result:='4096M'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
@@ -674,7 +756,19 @@ begin
     begin
      //Result:='raspi2'; //Not yet supported
     end
+   else if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
    else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
     begin
      //Result:='raspi2'; //Not yet supported
     end
@@ -685,7 +779,19 @@ begin
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
-   if Uppercase(Controller) = 'RPI3B' then
+   if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='raspi2'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
     begin
      //Result:='raspi2'; //Not yet supported
     end
@@ -961,7 +1067,7 @@ begin
   end;
 
  cmbController.Clear;
- for Count:=0 to 5 do
+ for Count:=0 to 8 do
   begin
    cmbController.Items.Add(ControllerNames[Count]);
   end;

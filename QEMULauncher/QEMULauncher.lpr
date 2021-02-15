@@ -1,7 +1,7 @@
 {
 Ultibo QEMU Launcher Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -67,18 +67,25 @@ QEMU Launcher
 
 program QEMULauncher;
 
+{$MODE Delphi}
+
 uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
   Forms,
+  Interfaces,
   Main in 'Main.pas' {frmMain};
 
-{$R QEMULauncherManifest.RES}
-{$R *.RES}
+{$R *.res}
 
 var
  Launch:TQEMULaunch;
 
 begin
  {}
+ RequireDerivedFormResource:=True;
+
  if ParamCount >= 4 then
   begin
    Launch:=TQEMULaunch.Create;

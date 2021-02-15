@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2018 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -91,14 +91,20 @@ RTL Builder
 
 program BuildRTL;
 
+{$MODE Delphi}
+
 uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
   Forms,
+  Interfaces,
   Main in 'Main.pas' {frmMain};
 
-{$R BuildRTLManifest.RES}      
-{$R *.RES}
+{$R *.res}
 
 begin
+  RequireDerivedFormResource := True;
   Application.Initialize;
   Application.Title := 'Ultibo RTL Builder';
   Application.CreateForm(TfrmMain, frmMain);

@@ -1,7 +1,7 @@
 {
 Ultibo Timezone Builder Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -39,14 +39,17 @@ Timezone Builder
 
 program TimezoneBuilder;
 
+{$MODE Delphi}
+
 uses
   Forms,
+  Interfaces,
   Main in 'Main.pas' {frmMain};
 
-{$R TimezoneBuilderManifest.RES}  
-{$R *.RES}
+{$R *.res}
 
 begin
+  RequireDerivedFormResource:=True;
   Application.Initialize;
   Application.Title := 'Ultibo Timezone Builder';
   Application.CreateForm(TfrmMain, frmMain);

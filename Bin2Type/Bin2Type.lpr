@@ -1,7 +1,7 @@
 {
 Ultibo Binary to Type Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -39,14 +39,20 @@ Binary to Type
 
 program Bin2Type;
 
+{$MODE Delphi}
+
 uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
   Forms,
+  Interfaces,
   Main in 'Main.pas' {frmMain};
 
-{$R Bin2TypeManifest.RES}
-{$R *.RES}
+{$R *.res}
 
 begin
+  RequireDerivedFormResource := True;
   Application.Initialize;
   Application.Title := 'Binary to Type Definition';
   Application.CreateForm(TfrmMain, frmMain);

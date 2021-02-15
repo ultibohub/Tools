@@ -1,7 +1,7 @@
 {
 Ultibo Timezone Builder Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -39,11 +39,24 @@ Timezone Builder
 
 unit Main;
 
+{$MODE Delphi}
+
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, Registry;
+  LCLIntf,
+  LCLType,
+  LMessages,
+  Messages,
+  SysUtils,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  Dialogs,
+  StdCtrls,
+  ExtCtrls,
+  Registry;
 
 type
   TfrmMain = class(TForm)
@@ -78,10 +91,38 @@ const
 var
   frmMain: TfrmMain;
 
+function ConvertSingleQuotes(const AValue:String):String;
+
 implementation
 
-{$R *.DFM}
+{$R *.lfm}
 
+{==============================================================================}
+{==============================================================================}
+
+function ConvertSingleQuotes(const AValue:String):String;
+var
+ Count:Integer;
+begin
+ {}
+ Result:='';
+
+ for Count:=1 to Length(AValue) do
+  begin
+   {Check for Single Quotes}
+   if AValue[Count] = '''' then
+    begin
+     {Duplicate Single Quotes}
+     Result:=Result + AValue[Count] + AValue[Count];
+    end
+   else
+    begin
+     Result:=Result + AValue[Count];
+    end;
+  end;
+end;
+
+{==============================================================================}
 {==============================================================================}
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -211,10 +252,10 @@ begin
 
              {Add Timezone}
              mmoMain.Lines.Add('   {' + TimezoneNames.Strings[Count] + '}');
-             mmoMain.Lines.Add('   (Name:(''' + TimezoneNames.Strings[Count] + ''');');
-             mmoMain.Lines.Add('    Description:(''' + Registry.ReadString('Display') + ''');');
+             mmoMain.Lines.Add('   (Name:(''' + ConvertSingleQuotes(TimezoneNames.Strings[Count]) + ''');');
+             mmoMain.Lines.Add('    Description:(''' + ConvertSingleQuotes(Registry.ReadString('Display')) + ''');');
              mmoMain.Lines.Add('    Bias:' + IntToStr(TimezoneRec.Bias) + ';');
-             mmoMain.Lines.Add('    StandardName:(''' + Registry.ReadString('Std') + ''');');
+             mmoMain.Lines.Add('    StandardName:(''' + ConvertSingleQuotes(Registry.ReadString('Std')) + ''');');
              mmoMain.Lines.Add('    StandardBias:' + IntToStr(TimezoneRec.StandardBias) + ';');
 
              WorkBuffer:='    StandardStart:(wYear:' + IntToStr(TimezoneRec.StandardStart.wYear);
@@ -227,7 +268,7 @@ begin
              WorkBuffer:=WorkBuffer + ';wMilliseconds:' + IntToStr(TimezoneRec.StandardStart.wMilliseconds) + ');';
              mmoMain.Lines.Add(WorkBuffer);
 
-             mmoMain.Lines.Add('    DaylightName:(''' + Registry.ReadString('Dlt') + ''');');
+             mmoMain.Lines.Add('    DaylightName:(''' + ConvertSingleQuotes(Registry.ReadString('Dlt')) + ''');');
              mmoMain.Lines.Add('    DaylightBias:' + IntToStr(TimezoneRec.DaylightBias) + ';');
 
              WorkBuffer:='    DaylightStart:(wYear:' + IntToStr(TimezoneRec.DaylightStart.wYear);

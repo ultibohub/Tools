@@ -1,7 +1,7 @@
 {
 Ultibo Configure RTL Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -43,6 +43,7 @@ Configure RTL
   RPI.CFG
   RPI2.CFG
   RPI3.CFG
+  RPI4.CFG
   QEMUVPB.CFG
 
   environmentoptions.xml
@@ -51,12 +52,18 @@ Configure RTL
 
 program ConfigureRTL;
 
+{$MODE Delphi}
+
 uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
+  Interfaces,
   SysUtils,
   FileCtrl,
   Main in 'Main.pas';
 
-{$R *.RES}
+{$R *.res}
 
 var
  InstallPath:String;
@@ -96,14 +103,25 @@ begin
      LazarusVersionNo:=ParamStr(4);
 
      {Get Compiler Path}
+     {$IFDEF WINDOWS}
      CompilerPath:=InstallPath + '\fpc\' + CompilerVersion;
+     {$ENDIF}
+     {$IFDEF LINUX}
+     CompilerPath:=InstallPath + '/fpc';
+     {$ENDIF}
 
      {Get Configuration Path}
+     {$IFDEF WINDOWS}
      ConfigurationPath:=InstallPath + '\fpc\' + CompilerVersion + '\bin\i386-win32';
+     {$ENDIF}
+     {$IFDEF LINUX}
+     ConfigurationPath:=InstallPath + '/fpc/' + CompilerVersion + '/bin';
+     {$ENDIF}
 
      {Check Configuration Path}
      if DirectoryExists(ConfigurationPath) then
       begin
+       {$IFDEF WINDOWS}
        {Edit FP.CFG}
        EditConfiguration('FP.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 
@@ -119,11 +137,33 @@ begin
        {Edit RPI3.CFG}
        EditConfiguration('RPI3.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 
+       {Edit RPI4.CFG}
+       EditConfiguration('RPI4.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
        {Edit QEMUVPB.CFG}
        EditConfiguration('QEMUVPB.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 
        {Create environmentoptions.xml}
        CreateOptions('environmentoptions.xml',AddTrailingSlash(InstallPath),AddTrailingSlash(CompilerPath),LazarusVersion,LazarusVersionNo);
+       {$ENDIF}
+       {$IFDEF LINUX}
+       {Edit RPI.CFG}
+       EditConfiguration('RPI.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       {Edit RPI2.CFG}
+       EditConfiguration('RPI2.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       {Edit RPI3.CFG}
+       EditConfiguration('RPI3.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       {Edit RPI4.CFG}
+       EditConfiguration('RPI4.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       {Edit QEMUVPB.CFG}
+       EditConfiguration('QEMUVPB.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
+
+       //To Do //environmentoptions.xml
+       {$ENDIF}
       end;
     end;
   end;

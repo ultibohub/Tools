@@ -1,0 +1,197 @@
+object frmMain: TfrmMain
+  Left = 406
+  Height = 770
+  Top = 162
+  Width = 840
+  Caption = 'Ultibo Font Builder'
+  ClientHeight = 770
+  ClientWidth = 840
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnHide = FormHide
+  OnShow = FormShow
+  Position = poScreenCenter
+  LCLVersion = '2.0.2.0'
+  object imgMain: TImage
+    Left = 0
+    Height = 510
+    Top = 237
+    Width = 840
+    Align = alClient
+    Center = True
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 747
+    Width = 840
+    Panels = <>
+    SimplePanel = False
+  end
+  object pnlMain: TPanel
+    Left = 0
+    Height = 237
+    Top = 0
+    Width = 840
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 237
+    ClientWidth = 840
+    TabOrder = 1
+    object lblSource: TLabel
+      Left = 18
+      Height = 13
+      Top = 22
+      Width = 40
+      Caption = 'Font file:'
+      ParentColor = False
+    end
+    object lblFormat: TLabel
+      Left = 18
+      Height = 13
+      Top = 58
+      Width = 56
+      Caption = 'Font format:'
+      ParentColor = False
+    end
+    object lblPreview: TLabel
+      Left = 18
+      Height = 13
+      Top = 218
+      Width = 62
+      Caption = 'Font Preview'
+      ParentColor = False
+    end
+    object lblWidth: TLabel
+      Left = 34
+      Height = 13
+      Top = 146
+      Width = 89
+      Caption = 'Character Width: 0'
+      ParentColor = False
+    end
+    object lblHeight: TLabel
+      Left = 154
+      Height = 13
+      Top = 146
+      Width = 92
+      Caption = 'Character Height: 0'
+      ParentColor = False
+    end
+    object lblInformation: TLabel
+      Left = 18
+      Height = 13
+      Top = 90
+      Width = 76
+      Caption = 'Font Information'
+      ParentColor = False
+    end
+    object lblCharSize: TLabel
+      Left = 274
+      Height = 13
+      Top = 146
+      Width = 81
+      Caption = 'Character Size: 0'
+      ParentColor = False
+    end
+    object lblLength: TLabel
+      Left = 382
+      Height = 13
+      Top = 146
+      Width = 96
+      Caption = 'Number of Glyphs: 0'
+      ParentColor = False
+    end
+    object lblUnicode: TLabel
+      Left = 34
+      Height = 13
+      Top = 174
+      Width = 112
+      Caption = 'Has Unicode Table: No'
+      ParentColor = False
+    end
+    object lblVersion: TLabel
+      Left = 34
+      Height = 13
+      Top = 118
+      Width = 47
+      Caption = 'Version: 0'
+      ParentColor = False
+    end
+    object txtSource: TEdit
+      Left = 78
+      Height = 21
+      Top = 18
+      Width = 701
+      Anchors = [akTop, akLeft, akRight]
+      OnChange = txtSourceChange
+      TabOrder = 0
+    end
+    object cmdSource: TButton
+      Left = 785
+      Height = 21
+      Top = 18
+      Width = 21
+      Anchors = [akTop, akRight]
+      Caption = '...'
+      OnClick = cmdSourceClick
+      TabOrder = 1
+    end
+    object cmdOpen: TButton
+      Left = 618
+      Height = 25
+      Top = 54
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'Open'
+      OnClick = cmdOpenClick
+      TabOrder = 2
+    end
+    object cmdExport: TButton
+      Left = 702
+      Height = 25
+      Top = 54
+      Width = 75
+      Anchors = [akTop, akRight]
+      Caption = 'Export...'
+      OnClick = cmdExportClick
+      TabOrder = 3
+    end
+    object cmbFormat: TComboBox
+      Left = 78
+      Height = 21
+      Top = 54
+      Width = 145
+      ItemHeight = 13
+      Items.Strings = (
+        'PC Screen Font (PSF)'
+        'Code Page Information (CPI)'
+        'Code Page Entry (CP)'
+      )
+      OnChange = cmbFormatChange
+      Style = csDropDownList
+      TabOrder = 4
+    end
+    object chkAllowPartial: TCheckBox
+      Left = 238
+      Height = 19
+      Top = 56
+      Width = 102
+      Caption = 'Allow partial fonts'
+      OnClick = chkAllowPartialClick
+      TabOrder = 5
+    end
+  end
+  object openMain: TOpenDialog
+    left = 8
+    top = 668
+  end
+  object saveMain: TSaveDialog
+    left = 40
+    top = 668
+  end
+end

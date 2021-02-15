@@ -1,7 +1,7 @@
 {
 Ultibo Configure RTL Tool.
 
-Copyright (C) 2016 - SoftOz Pty Ltd.
+Copyright (C) 2021 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -23,7 +23,7 @@ Credits
 
  Information for this unit was obtained from:
 
- 
+
 References
 ==========
 
@@ -32,7 +32,8 @@ Configure RTL
 =============
 
  The Configure RTL tool is used by the Ultibo core installer to update the configuration
- files used by FPC to determine unit locations etc.
+ files used by FPC to determine unit locations etc and the environment options file for
+ Lazarus.
 
  The tool only runs once at the end of the install and is not required again, the
  files updated are:
@@ -42,14 +43,28 @@ Configure RTL
   RPI.CFG
   RPI2.CFG
   RPI3.CFG
+  RPI4.CFG
+  QEMUVPB.CFG
+
+  environmentoptions.xml
 
 }
 
 unit Main;
 
+{$MODE Delphi}
+
 interface
 
-uses Windows,SysUtils,Classes;
+uses
+  {$IFDEF WINDOWS}
+  Windows,
+  {$ENDIF}
+  LCLIntf,
+  LCLType,
+  LMessages,
+  SysUtils,
+  Classes;
 
 {==============================================================================}
 const
@@ -79,27 +94,39 @@ var
 begin
  {}
  Result:='';
+ {$IFDEF WINDOWS}
  szTempPath:='';
  if GetTempPath(MAX_PATH,szTempPath) > 0 then
   begin
    Result:=szTempPath;
   end;
+ {$ENDIF}
+ {$IFDEF LINUX}
+ //To Do
+ {$ENDIF}
 end;
 
 {==============================================================================}
 
 function AddTrailingSlash(const FilePath:String):String;
 var
+ SlashChar:Char;
  WorkBuffer:String;
 begin
  {}
+ {$IFDEF WINDOWS}
+ SlashChar:='\';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ SlashChar:='/';
+ {$ENDIF}
  WorkBuffer:=Trim(FilePath);
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] <> '\' then
+   if WorkBuffer[Length(WorkBuffer)] <> SlashChar then
     begin
-     Result:=WorkBuffer + '\';
+     Result:=WorkBuffer + SlashChar;
     end;
   end;
 end;
@@ -108,14 +135,21 @@ end;
 
 function StripTrailingSlash(const FilePath:String):String;
 var
+ SlashChar:Char;
  WorkBuffer:String;
 begin
  {}
+ {$IFDEF WINDOWS}
+ SlashChar:='\';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ SlashChar:='/';
+ {$ENDIF}
  WorkBuffer:=Trim(FilePath);
  Result:=WorkBuffer;
  if Length(WorkBuffer) > 0 then
   begin
-   if WorkBuffer[Length(WorkBuffer)] = '\' then
+   if WorkBuffer[Length(WorkBuffer)] = SlashChar then
     begin
      Delete(WorkBuffer,Length(WorkBuffer),1);
      Result:=WorkBuffer;
