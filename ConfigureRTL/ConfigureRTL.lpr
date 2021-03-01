@@ -115,7 +115,7 @@ begin
      ConfigurationPath:=InstallPath + '\fpc\' + CompilerVersion + '\bin\i386-win32';
      {$ENDIF}
      {$IFDEF LINUX}
-     ConfigurationPath:=InstallPath + '/fpc/' + CompilerVersion + '/bin';
+     ConfigurationPath:=InstallPath + '/fpc/bin';
      {$ENDIF}
 
      {Check Configuration Path}
@@ -147,6 +147,8 @@ begin
        CreateOptions('environmentoptions.xml',AddTrailingSlash(InstallPath),AddTrailingSlash(CompilerPath),LazarusVersion,LazarusVersionNo);
        {$ENDIF}
        {$IFDEF LINUX}
+       {Don't Edit FP.CFG or FPC.CFG}
+
        {Edit RPI.CFG}
        EditConfiguration('RPI.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 

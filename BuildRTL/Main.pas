@@ -63,27 +63,39 @@ RTL Builder
 
  PathPrefix - A text value to prepend to the path variable in the batch file (Default: <Blank>)
 
- InstallPath - The path where Ultibo core is installed (Default: C:\Ultibo\Core) (Detected from the application path)
 
- CompilerName - The name of the Free Pascal compiler (Default: fpc.exe)
+ InstallPath - The path where Ultibo core is installed (Default Windows: C:\Ultibo\Core) (Detected from the application path)
+                                                       (        Linux: $HOME/ultibo/core)
 
- CompilerPath - The path where the Ultibo version of FPC is installed (Default: <InstallPath>\fpc\<CompilerVersion>)
+ CompilerName - The name of the Free Pascal compiler (Default Windows: fpc.exe)
+                                                     (        Linux: fpc)
+
+ CompilerPath - The path where the Ultibo version of FPC is installed (Default Windows: <InstallPath>\fpc\<CompilerVersion>)
+                                                                      (        Linux: <InstallPath>/fpc)
 
  CompilerVersion - The version of the FPC compiler (Default: 3.1.1)
 
- SourcePath - The path to RTL and Packages source code (Default: <CompilerPath>\source)
+
+ SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
+                                                       (        Linux: <CompilerPath>/source)
 
  ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
- 
+
+
  AARCH64Compiler - The name of the Free Pascal AARCH64 Compiler or Cross Compiler (Default: <Blank>)
+
 
  BuildRTL - Enable or disable building the RTL (0=Disable / 1=Enable) (Default: 1)
 
+
  BuildPackages - Enable or disable building the Packages (0=Disable / 1=Enable) (Default: 1)
+
 
  PlatformARMv6 - Build the RTL and Packages for ARMv6 architecture (0=Disable / 1=Enable) (Default: 1)
 
+
  PlatformARMv7 - Build the RTL and Packages for ARMv7 architecture (0=Disable / 1=Enable) (Default: 1)
+
 
  PlatformARMv8 - Build the RTL and Packages for ARMv8 architecture (0=Disable / 1=Enable) (Default: 1)
 
@@ -102,9 +114,15 @@ uses
   {$IFDEF WINDOWS}
   Windows,
   {$ENDIF}
+  {$IFDEF LINUX}
+  BaseUnix,
+  {$ENDIF}
   Messages,
   SysUtils,
   Classes,
+  {$IFDEF FPC}
+  Process,
+  {$ENDIF}
   Graphics,
   Controls,
   Forms,
@@ -115,7 +133,12 @@ uses
   IniFiles;
 
 const
+ {$IFDEF WINDOWS}
  LineEnd = Chr(13) + Chr(10); {CR LF}
+ {$ENDIF}
+ {$IFDEF LINUX}
+ LineEnd = Chr(10); {LF}
+ {$ENDIF}
  MarkerEnd = '!!!EndOfBuild!!!';
  MarkerProgress = '!!!Progress'; {Suffix will be progress value as a percentage}
  {$IFDEF WINDOWS}
@@ -187,10 +210,10 @@ function GetDosOutput(CommandLine: string; Work: string = 'C:\'): string;
 procedure CaptureConsoleOutput(const ACommand, AParameters: String; AMemo: TMemo);
 
 function ExecuteConsoleProcess(const ACommand,AParameters,AWorking:String;AMemo:TMemo):Boolean;
-function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AEndMark,AProgressMark:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
 {$ENDIF}
 {$IFDEF LINUX}
-function ExecuteShellProcess(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+function ExecuteShellProcess(const ACommand:String;AParameters:TStrings;const AWorking,AEndMark,AProgressMark:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
 {$ENDIF}
 
 {For details on how to capture command prompt output see:
@@ -198,6 +221,8 @@ function ExecuteShellProcess(const ACommand,AParameters,AWorking,AMarker:String;
  http://www.delphidabbler.com/tips/61
 
  http://stackoverflow.com/questions/9119999/getting-output-from-a-shell-dos-app-into-a-delphi-app
+
+ https://wiki.lazarus.freepascal.org/Executing_External_Programs#Reading_large_output
 
  See also JclSysUtils unit in the Jedi JCL
 
@@ -442,7 +467,7 @@ end;
 
 {==============================================================================}
 
-function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+function ExecuteConsoleProcessEx(const ACommand,AParameters,AWorking,AEndMark,AProgressMark:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
 {Modified from: CaptureConsoleOutput}
 var
  WorkDir:PChar;
@@ -525,14 +550,25 @@ begin
             {Check for LF}
             if ReadChar = #10 then
              begin
-              {Check Marker}
-              if Length(AMarker) <> 0 then
+              {Check End Mark}
+              if Length(AEndMark) > 0 then
                begin
-                if ReadData = AMarker then Break;
+                if ReadData = AEndMark then Break;
                end;
 
-              {Add Output}
-              AMemo.Lines.Add(ReadData);
+              {Check Progress Mark}
+              if (Length(AProgressMark) > 0) and (Copy(ReadData,1,Length(AProgressMark)) = AProgressMark) then
+               begin
+                {Update Progress}
+                AProgress.Position:=StrToIntDef(Copy(ReadData,Length(AProgressMark) + 1,Length(ReadData)),AProgress.Position);
+               end
+              else
+               begin
+                {Add Output}
+                AMemo.Lines.Add(ReadData);
+                AMemo.SelStart:=Length(AMemo.Text);
+               end;
+
               Application.ProcessMessages;
 
               {Reset Data}
@@ -558,18 +594,100 @@ end;
 {$ENDIF}
 {==============================================================================}
 {$IFDEF LINUX}
-function ExecuteShellProcess(const ACommand,AParameters,AWorking,AMarker:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+function ExecuteShellProcess(const ACommand:String;AParameters:TStrings;const AWorking,AEndMark,AProgressMark:String;AMemo:TMemo;AProgress:TProgressBar):Boolean;
+var
+ Count:Integer;
+ BytesRead:LongInt;
+ ReadData:String;
+ ReadChar:AnsiChar;
+ ProcessInfo:TProcess;
 begin
  {}
  Result:=False;
+ try
+  {Check Parameters}
+  if Length(ACommand) = 0 then Exit;
+  if AParameters = nil then Exit;
+  if Length(AWorking) = 0 then Exit;
+  if AMemo = nil then Exit;
+  if AProgress = nil then Exit;
 
- {Check Parameters}
- if (Length(ACommand) = 0) and (Length(AParameters) = 0) then Exit;
- if AMemo = nil then Exit;
- if AProgress = nil then Exit;
+  ProcessInfo:=TProcess.Create(nil);
+  try
+   {Setup Process Options}
+   ProcessInfo.Options:=[poUsePipes,poStderrToOutPut];
 
- //To Do //See: https://wiki.lazarus.freepascal.org/Executing_External_Programs#Reading_large_output
+   {Add Executable}
+   ProcessInfo.Executable:=ACommand;
 
+   {Add Working}
+   ProcessInfo.CurrentDirectory:=AWorking;
+
+   {Add Parameters}
+   for Count:=0 to AParameters.Count - 1 do
+    begin
+     ProcessInfo.Parameters.Add(AParameters.Strings[Count]);
+    end;
+
+   {Execute Process}
+   ProcessInfo.Execute;
+
+   ReadData:='';
+   ReadChar:=#0;
+
+   repeat
+    {Read from Pipe}
+    BytesRead := ProcessInfo.Output.Read(ReadChar, SizeOf(AnsiChar));
+
+    {Check Bytes Read}
+    if BytesRead > 0 then
+     begin
+      {Check for CR LF}
+      if not(ReadChar in [#10,#13]) then
+       begin
+        ReadData:=ReadData + ReadChar;
+       end
+      else
+       begin
+        {Check for LF}
+        if ReadChar = #10 then
+         begin
+          {Check End Mark}
+          if Length(AEndMark) > 0 then
+           begin
+            if ReadData = AEndMark then Break;
+           end;
+
+          {Check Progress Mark}
+          if (Length(AProgressMark) > 0) and (Copy(ReadData,1,Length(AProgressMark)) = AProgressMark) then
+           begin
+            {Update Progress}
+            AProgress.Position:=StrToIntDef(Copy(ReadData,Length(AProgressMark) + 1,Length(ReadData)),AProgress.Position);
+           end
+          else
+           begin
+            {Add Output}
+            AMemo.Lines.Add(ReadData);
+            AMemo.SelStart:=Length(AMemo.Text);
+           end;
+
+          Application.ProcessMessages;
+
+          {Reset Data}
+          ReadData:='';
+         end;
+       end;
+     end;
+
+   until BytesRead = 0;
+
+   Result:=True;
+  finally
+   ProcessInfo.Free;
+  end;
+ except
+  {EProcess exception raised on error}
+ end;
 end;
 {$ENDIF}
 {==============================================================================}
@@ -633,21 +751,39 @@ begin
  {}
  {A value to prefix on the path}
  PathPrefix:='';
- 
+
  {Assume that this is running from <InstallPath>\tools and that the InstallPath will be the folder above}
  InstallPath:=ExtractFileDir(ExtractFileDir(Application.ExeName));
 
  {The current compiler version}
  CompilerVersion:='3.1.1';
 
+ {$IFDEF WINDOWS}
  {Assume the compiler name is fpc.exe}
  CompilerName:='fpc.exe';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {Assume the compiler name is fpc}
+ CompilerName:='fpc';
+ {$ENDIF}
 
+ {$IFDEF WINDOWS}
  {Assume that the compiler path will be \fpc\<CompilerVersion> under the InstallPath}
  CompilerPath:=InstallPath + '\fpc\' + CompilerVersion;
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {Assume that the compiler path will be /fpc/bin under the InstallPath}
+ CompilerPath:=InstallPath + '/fpc/bin';
+ {$ENDIF}
 
+ {$IFDEF WINDOWS}
  {Assume that the source path will be \source under the CompilerPath}
  SourcePath:=CompilerPath + '\source';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {Assume that the source path will be /source under the CompilerPath}
+ SourcePath:=CompilerPath + '/source';
+ {$ENDIF}
 
  {The names of the ARM compiler or cross compiler}
  ARMCompiler:='';
@@ -663,6 +799,12 @@ begin
  PlatformARMv8:=True;
 
  LoadConfig;
+
+ {$IFDEF LINUX}
+ {Temporarily disable ARMv8 RTL build for Linux}
+ PlatformARMv8:=False;
+ chkARMv8.Visible:=False;
+ {$ENDIF}
 end;
 
 {==============================================================================}
@@ -924,6 +1066,9 @@ end;
 
 function TfrmMain.CreateBuildFile:Boolean;
 var
+ Total:Integer;
+ Progress:Integer;
+ Percent:Integer;
  Filename:String;
  WorkBuffer:String;
  FileStream:TFileStream;
@@ -962,6 +1107,34 @@ begin
   {Create File}
   FileStream:=TFileStream.Create(Filename,fmCreate);
   try
+   {Calculate Progress}
+   Total:=0;
+   Progress:=0;
+   Percent:=0;
+
+   {Check RTL}
+   if BuildRTL then
+    begin
+     if PlatformARMv6 then Inc(Total, 3);
+     if PlatformARMv7 then Inc(Total, 3);
+     if PlatformARMv8 then Inc(Total, 3);
+    end;
+
+   {Check Packages}
+   if BuildPackages then
+    begin
+     if PlatformARMv6 then Inc(Total, 4);
+     if PlatformARMv7 then Inc(Total, 4);
+     if PlatformARMv8 then Inc(Total, 4);
+    end;
+
+   {Calculate Percent}
+   if Total > 0 then
+    begin
+     Percent:=100 div Total;
+    end;
+
+   {$IFDEF WINDOWS}
    {Add Header}
    WorkBuffer:='';
    WorkBuffer:=WorkBuffer + '@echo off' + LineEnd;
@@ -995,6 +1168,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
@@ -1005,6 +1181,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1018,6 +1197,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
@@ -1042,6 +1224,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
@@ -1053,6 +1238,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
@@ -1063,6 +1251,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1076,6 +1267,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
@@ -1104,6 +1298,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
@@ -1114,6 +1311,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1127,6 +1327,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
@@ -1151,6 +1354,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
@@ -1162,6 +1368,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
@@ -1172,6 +1381,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1185,6 +1397,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
@@ -1213,6 +1428,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
@@ -1223,6 +1441,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1236,6 +1457,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
@@ -1260,6 +1484,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
@@ -1271,6 +1498,9 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
@@ -1281,6 +1511,9 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1295,9 +1528,14 @@ begin
        WorkBuffer:=WorkBuffer + 'IF %errorlevel% NEQ 0 GOTO Error' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo .' + LineEnd;
 
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(Progress * Percent) + LineEnd;
+
        WorkBuffer:=WorkBuffer + '' + LineEnd;
       end;
     end;
+
+   WorkBuffer:=WorkBuffer + 'echo ' + MarkerProgress + IntToStr(100) + LineEnd;
 
    {Add Footer}
    WorkBuffer:=WorkBuffer + '' + LineEnd;
@@ -1318,6 +1556,376 @@ begin
    WorkBuffer:=WorkBuffer + 'echo =======================End of Build Script=======================' + LineEnd;
    WorkBuffer:=WorkBuffer + 'echo ' + MarkerEnd + LineEnd;
    WorkBuffer:=WorkBuffer + '' + LineEnd;
+   {$ENDIF}
+   {$IFDEF LINUX}
+   {Add Header}
+   WorkBuffer:='';
+   WorkBuffer:=WorkBuffer + '#!/bin/bash' + LineEnd;
+   WorkBuffer:=WorkBuffer + '' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'export PATH=' + PathPrefix + StripTrailingSlash(CompilerPath) + '/bin:$PATH' + LineEnd;
+   WorkBuffer:=WorkBuffer + '' + LineEnd;
+
+   {Add Error}
+   WorkBuffer:=WorkBuffer + 'function exitFailure() {' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    if [ $? -ne 0 ]; then' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        echo "."' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        echo "Build RTL failed, see above for errors"' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        echo "."' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        echo "=======================End of Build Script======================="' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        echo "' + MarkerEnd + '"' + LineEnd;
+   WorkBuffer:=WorkBuffer + '        exit 1' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    fi' + LineEnd;
+   WorkBuffer:=WorkBuffer + '}' + LineEnd;
+
+   {Add Start}
+   WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "======================Start of Build Script======================"' + LineEnd;
+
+   {Check ARMv6}
+   if PlatformARMv6 then
+    begin
+     {Check RTL}
+     if BuildRTL then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv6 RTL"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "=================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       {RTL Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+
+     {Check Packages}
+     if BuildPackages then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv6 packages"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "======================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       {RTL Clean (To remove units from /rtl/units)}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+    end;
+
+   {Check ARMv7}
+   if PlatformARMv7 then
+    begin
+     {Check RTL}
+     if BuildRTL then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv7 RTL"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "=================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       {RTL Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+
+     {Check Packages}
+     if BuildPackages then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv7 Packages"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "======================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       {RTL Clean (To remove units from /rtl/units)}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+    end;
+
+   {Check ARMv8}
+   if PlatformARMv8 then
+    begin
+     {Check RTL}
+     if BuildRTL then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv8 RTL"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "=================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       //To Do //BINUTILSPREFIX for AARCH64 ?
+
+       {RTL Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {RTL Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+
+     {Check Packages}
+     if BuildPackages then
+      begin
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "Building ARMv8 Packages"' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "======================="' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+
+       //To Do //BINUTILSPREFIX for AARCH64 ?
+
+       {RTL Clean (To remove units from /rtl/units)}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Clean}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       {Packages Install}
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
+       WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
+
+       Inc(Progress);
+       WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(Progress * Percent) + '"' + LineEnd;
+
+       WorkBuffer:=WorkBuffer + '' + LineEnd;
+      end;
+    end;
+
+   WorkBuffer:=WorkBuffer + 'echo "' + MarkerProgress + IntToStr(100) + '"' + LineEnd;
+
+   {Add Footer}
+   WorkBuffer:=WorkBuffer + '' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "Build RTL completed successfully"' + LineEnd;
+
+   {Add End}
+   WorkBuffer:=WorkBuffer + '' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "=======================End of Build Script======================="' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'echo "' + MarkerEnd + '"' + LineEnd;
+   WorkBuffer:=WorkBuffer + '' + LineEnd;
+   {$ENDIF}
 
    {Set Size}
    FileStream.Size:=Length(WorkBuffer);
@@ -1329,6 +1937,13 @@ begin
    Result:=True;
   finally
    FileStream.Free;
+
+   {$IFDEF LINUX}
+   if Result then
+    begin
+     FpChmod(Filename,S_IRWXU or S_IRGRP or S_IXGRP or S_IROTH or S_IXOTH);
+    end;
+   {$ENDIF}
   end;
  except
   on E: Exception do
@@ -1343,6 +1958,9 @@ end;
 function TfrmMain.ExecuteBuildFile:Boolean;
 var
  Filename:String;
+ {$IFDEF LINUX}
+ Parameters:TStringList;
+ {$ENDIF}
 begin
  {}
  Result:=False;
@@ -1365,10 +1983,17 @@ begin
 
   {Execute Process}
   {$IFDEF WINDOWS}
-  if not ExecuteConsoleProcessEx('cmd.exe /c',Filename,SourcePath,MarkerEnd,mmoMain,progressMain) then Exit;
+  if not ExecuteConsoleProcessEx('cmd.exe /c',Filename,SourcePath,MarkerEnd,MarkerProgress,mmoMain,progressMain) then Exit;
   {$ENDIF}
   {$IFDEF LINUX}
-  if not ExecuteShellProcess('/bin/bash -c',Filename,SourcePath,MarkerEnd,mmoMain,progressMain) then Exit;
+  Parameters:=TStringList.Create;
+  try
+   Parameters.Add('-c');
+   Parameters.Add(Filename);
+   if not ExecuteShellProcess('/bin/bash',Parameters,SourcePath,MarkerEnd,MarkerProgress,mmoMain,progressMain) then Exit;
+  finally
+   Parameters.Free;
+  end;
   {$ENDIF}
 
   Result:=True;

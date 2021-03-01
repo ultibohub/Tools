@@ -272,6 +272,47 @@ begin
  txtOffset.Text:=IntToStr(FOffset);
  txtSize.Text:=IntToStr(FSize);
 
+ {Adjust Labels}
+ lblSource.Top:=txtSource.Top + ((txtSource.Height - lblSource.Height) div 2);
+ lblDest.Top:=txtDest.Top + ((txtDest.Height - lblDest.Height) div 2);
+ lblName.Top:=txtName.Top + ((txtName.Height - lblName.Height) div 2);
+ lblOffset.Top:=txtOffset.Top + ((txtOffset.Height - lblOffset.Height) div 2);
+ lblSize.Top:=txtSize.Top + ((txtSize.Height - lblSize.Height) div 2);
+ lblSize2.Top:=txtSize.Top + ((txtSize.Height - lblSize2.Height) div 2);
+
+ {Adjust Buttons}
+ if txtSource.Height > cmdSource.Height then
+  begin
+   cmdSource.Height:=txtSource.Height;
+   cmdSource.Width:=txtSource.Height;
+   cmdSource.Top:=txtSource.Top + ((txtSource.Height - cmdSource.Height) div 2);
+  end
+ else
+  begin
+   cmdSource.Height:=txtSource.Height + 2;
+   cmdSource.Width:=txtSource.Height + 2;
+   cmdSource.Top:=txtSource.Top - 1;
+  end;
+
+ if txtDest.Height > cmdDest.Height then
+  begin
+   cmdDest.Height:=txtDest.Height;
+   cmdDest.Width:=txtDest.Height;
+   cmdDest.Top:=txtDest.Top + ((txtDest.Height - cmdDest.Height) div 2);
+  end
+ else
+  begin
+   cmdDest.Height:=txtDest.Height + 2;
+   cmdDest.Width:=txtDest.Height + 2;
+   cmdDest.Top:=txtDest.Top - 1;
+  end;
+
+ if cmdSource.Height > cmdConvert.Height then
+  begin
+   cmdConvert.Height:=cmdSource.Height;
+   cmdExit.Height:=cmdSource.Height;
+  end;
+
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
   begin
@@ -292,12 +333,12 @@ begin
    Height:=Trunc(Height * Scale);}
 
    {Adjust Buttons}
-   cmdSource.Top:=txtSource.Top;
+   {cmdSource.Top:=txtSource.Top;
    cmdSource.Height:=txtSource.Height;
    cmdSource.Width:=cmdSource.Height;
    cmdDest.Top:=txtDest.Top;
    cmdDest.Height:=txtDest.Height;
-   cmdDest.Width:=cmdDest.Height;
+   cmdDest.Width:=cmdDest.Height;}
 
    {Enable Anchors (Not required for dialogs)}
    {txtSource.Anchors:=[akLeft,akTop,akRight];
@@ -342,7 +383,12 @@ begin
  {}
  openMain.FileName:=FSource;
  openMain.InitialDir:=ExtractFileDir(Application.ExeName);
+ {$IFDEF WINDOWS}
  openMain.Filter:='All Files (*.*)|*.*';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ openMain.Filter:='All Files (*.*)|*';
+ {$ENDIF}
  if openMain.Execute then
   begin
    txtSource.Text:=openMain.FileName;
@@ -364,7 +410,12 @@ begin
  {}
  saveMain.FileName:=FDest;
  saveMain.InitialDir:=ExtractFileDir(Application.ExeName);
+ {$IFDEF WINDOWS}
  saveMain.Filter:='All Files (*.*)|*.*';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ saveMain.Filter:='All Files (*.*)|*';
+ {$ENDIF}
  if saveMain.Execute then
   begin
    txtDest.Text:=saveMain.FileName;

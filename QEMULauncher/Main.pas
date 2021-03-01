@@ -75,12 +75,18 @@ uses
   {$IFDEF WINDOWS}
   Windows,
   {$ENDIF}
+  {$IFDEF LINUX}
+  BaseUnix,
+  {$ENDIF}
   LCLIntf,
   LCLType,
   LMessages,
   Messages,
   SysUtils,
   Classes,
+  {$IFDEF FPC}
+  Process,
+  {$ENDIF}
   Graphics,
   Controls,
   Forms,
@@ -179,6 +185,7 @@ const
   'RPI400',
   'QEMUVPB');
 
+{$IFDEF WINDOWS}
 type
  TWow64DisableWow64FsRedirection = function(var OldValue:Pointer):BOOL; stdcall;
  TWow64RevertWow64FsRedirection = function(OldValue:Pointer):BOOL; stdcall;
@@ -191,6 +198,7 @@ var
 
 function Wow64DisableWow64FsRedirection(var OldValue:Pointer):BOOL; stdcall;
 function Wow64RevertWow64FsRedirection(OldValue:Pointer):BOOL; stdcall;
+{$ENDIF}
 
 var
   frmMain: TfrmMain;
@@ -208,7 +216,13 @@ function ParameterValueEx(const AParameter:String;APlus,AMinus:Boolean):String;
 function ParameterExists(const AParameter:String):Boolean;
 function ParameterExistsEx(const AParameter:String;APlus,AMinus:Boolean):Boolean;
 
+{$IFDEF WINDOWS}
 function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):Boolean;
+{$ENDIF}
+{$IFDEF LINUX}
+function StartProgramEx(const AExecutable:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
+function StartQEMUSystem(const ACommand,APidFile:String;AWait:Boolean):Boolean;
+{$ENDIF}
 
 implementation
 
@@ -216,7 +230,7 @@ implementation
 
 {==============================================================================}
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 function Wow64DisableWow64FsRedirection(var OldValue:Pointer):BOOL; stdcall;
 begin
  {}
@@ -232,7 +246,7 @@ begin
  Result:=False;
  if Assigned(_Wow64RevertWow64FsRedirection) then Result:=_Wow64RevertWow64FsRedirection(OldValue);
 end;
-
+{$ENDIF}
 {==============================================================================}
 {==============================================================================}
 
@@ -460,7 +474,7 @@ begin
 end;
 
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):Boolean;
 var
  Command:String;
@@ -516,24 +530,208 @@ begin
   {}
  end;
 end;
+{$ENDIF}
+{==============================================================================}
+{$IFDEF LINUX}
+function StartProgramEx(const AExecutable:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
+{Launch an external program with specified parameters and options}
+var
+ Count:Integer;
+ ProcessInfo:TProcess;
+begin
+ Result:=False;
+ try
+  if Length(AExecutable) = 0 then Exit;
 
+  ProcessInfo:=TProcess.Create(nil);
+  try
+   {Create a detached process}
+   ProcessInfo.InheritHandles:=False;
+   ProcessInfo.Options:=[];
+   ProcessInfo.ShowWindow:=swoShow;
+
+   {Copy default environment variables including DISPLAY variable for GUI application to work}
+   for Count:=1 to GetEnvironmentVariableCount do
+    begin
+     ProcessInfo.Environment.Add(GetEnvironmentString(Count));
+    end;
+
+   {Check Terminal}
+   if ATerminal then
+    begin
+     ProcessInfo.Options:=[poNewConsole];
+    end;
+
+   {Add Executable}
+   ProcessInfo.Executable:=AExecutable;
+
+   {Add Parameters}
+   if AParams <> nil then
+    begin
+     for Count:=0 to AParams.Count - 1 do
+      begin
+       ProcessInfo.Parameters.Add(AParams.Strings[Count]);
+      end;
+    end;
+
+   {Execute Process}
+   ProcessInfo.Execute;
+
+   {Check Wait}
+   if AWait then
+    begin
+     {Wait while Running}
+     while ProcessInfo.Running do
+      begin
+       Sleep(1);
+       Application.ProcessMessages;
+      end;
+    end;
+
+   Result:=True;
+  finally
+   ProcessInfo.Free;
+  end;
+ except
+  {EProcess exception raised on error}
+ end;
+end;
+
+{==============================================================================}
+
+function StartQEMUSystem(const ACommand,APidFile:String;AWait:Boolean):Boolean;
+{Launch a QEMU session}
+{The qeum-system-??? executables require a new terminal session to be created which
+ then launches them via a bash session. This means that the process id recorded is
+ the id of the terminal and not the qeum-system-??? executable so waiting does not
+ work.
+
+ To resolve this a pid file name is passed to the qeum-system-??? executable and the
+ id recorded in that file is used to determine when the session has ended instead}
+
+ function GetProcessIdFromFile(const AFilename:String):THandle;
+ var
+  Lines:TStringList;
+ begin
+  Result:=THandle(-1);
+
+  if Length(AFilename) = 0 then Exit;
+
+  if not FileExists(AFilename) then Exit;
+
+  Lines:=TStringList.Create;
+  try
+   Lines.LoadFromFile(AFilename);
+   if Lines.Count = 1 then
+    begin
+     Result:=StrToIntDef(Lines.Strings[0],0);
+     if Result = 0 then Result:=THandle(-1);
+    end;
+  finally
+   Lines.Free;
+  end;
+ end;
+
+ function CheckProcessIdRunning(AHandle:THandle):Boolean;
+ var
+  Res:cint;
+ begin
+  Result:=False;
+
+  Res:=FpKill(AHandle, 0);
+  if Res = 0 then Result:=True;
+ end;
+
+var
+ Count:Integer;
+ ProcessInfo:TProcess;
+ ProcessHandle:THandle;
+begin
+ Result:=False;
+ try
+  if Length(ACommand) = 0 then Exit;
+  if AWait and (Length(APidFile) = 0) then Exit;
+
+  ProcessInfo:=TProcess.Create(nil);
+  try
+   {Create a detached process in a new terminal}
+   ProcessInfo.InheritHandles:=False;
+   ProcessInfo.Options:=[poNewConsole];
+   ProcessInfo.ShowWindow:=swoShow;
+
+   {Copy default environment variables including DISPLAY variable for GUI application to work}
+   for Count:=1 to GetEnvironmentVariableCount do
+    begin
+     ProcessInfo.Environment.Add(GetEnvironmentString(Count));
+    end;
+
+   {Create a bash session}
+   ProcessInfo.Executable:='/bin/bash';
+   ProcessInfo.Parameters.Add('-c');
+   ProcessInfo.Parameters.Add(ACommand + ' -pidfile "' + APidFile + '"');
+
+   {Execute Process}
+   ProcessInfo.Execute;
+
+   {Check Wait}
+   if AWait then
+    begin
+     Sleep(2000);
+
+     ProcessHandle:=GetProcessIdFromFile(APidFile);
+     if ProcessHandle <> THandle(-1) then
+      begin
+       while CheckProcessIdRunning(ProcessHandle) do
+        begin
+         Sleep(100);
+         Application.ProcessMessages;
+        end;
+      end;
+    end;
+
+   {Delete the PidFile}
+   if FileExists(APidFile) then
+    begin
+     DeleteFile(APidFile);
+    end;
+
+   Result:=True;
+  finally
+   ProcessInfo.Free;
+  end;
+ except
+  {EProcess exception raised on error}
+ end;
+end;
+{$ENDIF}
 {==============================================================================}
 {==============================================================================}
 
 constructor TQEMULaunch.Create;
+{$IFDEF WINDOWS}
 var
  InstallPath:String;
+{$ENDIF}
 begin
  {}
  inherited Create;
 
+ {$IFDEF WINDOWS}
  {Assume that this is running from <InstallPath>\tools and that the InstallPath will be the folder above}
  InstallPath:=ExtractFileDir(ExtractFileDir(Application.ExeName));
+ {$ENDIF}
 
  {QEMU Variables}
+ {$IFDEF WINDOWS}
  Path:=AddTrailingSlash(InstallPath) + 'qemu';
  SystemArm:='qemu-system-arm.exe';
  SystemAarch64:='qemu-system-aarch64.exe';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ Path:='/usr/bin';
+ SystemArm:='qemu-system-arm';
+ SystemAarch64:='qemu-system-aarch64';
+ {$ENDIF}
 
  ExtraParams:='';
  CommandLine:='';
@@ -808,6 +1006,10 @@ function TQEMULaunch.Launch:Boolean;
 var
  Param:String;
  Command:String;
+ {$IFDEF LINUX}
+ PidFile:String;
+ PidCount:Integer;
+ {$ENDIF}
  ProjectPath:String;
 begin
  {}
@@ -868,6 +1070,17 @@ begin
       {Add Kernel}
       Command:=Command + ' -kernel ' + AddQuotes(AddTrailingSlash(ProjectPath) + Param);
 
+      {$IFDEF LINUX}
+      {Get PidFile}
+      PidFile:=AddTrailingSlash(ProjectPath) + Param;
+      PidCount:=1;
+      while FileExists(PidFile + '.pid' + IntToStr(PidCount)) do
+       begin
+        Inc(PidCount);
+       end;
+      PidFile:=PidFile + '.pid' + IntToStr(PidCount);
+      {$ENDIF}
+
       {Get Memory}
       Param:=GetMemory;
       if Length(Param) = 0 then
@@ -889,7 +1102,12 @@ begin
       Command:=Command + ' ' + ExtraParams;
 
       {Start Program}
+      {$IFDEF WINDOWS}
       Result:=StartProgramEx(Command,StripTrailingSlash(ProjectPath),True,False);
+      {$ENDIF}
+      {$IFDEF LINUX}
+      Result:=StartQEMUSystem(Command,PidFile,True);
+      {$ENDIF}
      end
     else
      begin
@@ -1077,6 +1295,32 @@ begin
  cmbProcessor.ItemIndex:=cmbProcessor.Items.IndexOf(FLaunch.Processor);
  cmbController.ItemIndex:=cmbController.Items.IndexOf(FLaunch.Controller);
 
+ {Adjust Labels}
+ lblProject.Top:=txtProject.Top + ((txtProject.Height - lblProject.Height) div 2);
+ lblCPU.Top:=cmbCPU.Top + ((cmbCPU.Height - lblCPU.Height) div 2);
+ lblProcessor.Top:=cmbProcessor.Top + ((cmbProcessor.Height - lblProcessor.Height) div 2);
+ lblController.Top:=cmbController.Top + ((cmbController.Height - lblController.Height) div 2);
+
+ {Adjust Buttons}
+ if txtProject.Height > cmdProject.Height then
+ begin
+  cmdProject.Height:=txtProject.Height;
+  cmdProject.Width:=txtProject.Height;
+  cmdProject.Top:=txtProject.Top + ((txtProject.Height - cmdProject.Height) div 2);
+ end
+ else
+ begin
+  cmdProject.Height:=txtProject.Height + 2;
+  cmdProject.Width:=txtProject.Height + 2;
+  cmdProject.Top:=txtProject.Top - 1;
+ end;
+
+ if cmdProject.Height > cmdLaunch.Height then
+ begin
+  cmdLaunch.Height:=cmdProject.Height;
+  cmdClose.Height:=cmdProject.Height;
+ end;
+
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
   begin
@@ -1136,7 +1380,12 @@ procedure TfrmMain.cmdProjectClick(Sender: TObject);
 begin
  {}
  openMain.Title:='Select project';
+ {$IFDEF WINDOWS}
  openMain.Filter:='Lararus projects|*.lpr|All files|*.*';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ openMain.Filter:='Lararus projects|*.lpr|All files|*';
+ {$ENDIF}
  if Length(openMain.InitialDir) = 0 then
   begin
    openMain.InitialDir:=ExtractFilePath(Application.ExeName);
@@ -1217,7 +1466,7 @@ end;
 
 {==============================================================================}
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 initialization
  Wow64FsRedirectionHandle:=LoadLibrary(PChar(kernel32));
  if Wow64FsRedirectionHandle > HINSTANCE_ERROR then
@@ -1225,12 +1474,12 @@ initialization
    _Wow64DisableWow64FsRedirection:=GetProcAddress(Wow64FsRedirectionHandle,'Wow64DisableWow64FsRedirection');
    _Wow64RevertWow64FsRedirection:=GetProcAddress(Wow64FsRedirectionHandle,'Wow64RevertWow64FsRedirection');
   end;
-
+{$ENDIF}
 {==============================================================================}
-
+{$IFDEF WINDOWS}
 finalization
  if Wow64FsRedirectionHandle > HINSTANCE_ERROR then FreeLibrary(Wow64FsRedirectionHandle);
-
+{$ENDIF}
 {==============================================================================}
 {==============================================================================}
 

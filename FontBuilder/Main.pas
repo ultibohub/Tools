@@ -109,11 +109,18 @@ const
 
   //To Do //Raw font files and .fnt etc
 
+ {$IFDEF WINDOWS}
+ ALL_FILES_FILTER = '*.*';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ ALL_FILES_FILTER = '*';
+ {$ENDIF}
+
  FONT_FORMAT_FILTERS:array[0..FONT_FORMAT_MAX] of String = (
-  'PC Screen Font|*.psf?|All files|*.*',
-  'Code Page Information|*.cpi|All files|*.*',
-  'Code Page Entry|*.cp|All files|*.*',
-  'All files|*.*');
+  'PC Screen Font|*.psf?|All files|' + ALL_FILES_FILTER,
+  'Code Page Information|*.cpi|All files|' + ALL_FILES_FILTER,
+  'Code Page Entry|*.cp|All files|' + ALL_FILES_FILTER,
+  'All files|' + ALL_FILES_FILTER);
 
  {Version constants}
  FONT_VERSION_PSF1 = 0;
@@ -960,6 +967,30 @@ var
  Count:Integer;
 begin
  {}
+ {Adjust Labels}
+ lblSource.Top:=txtSource.Top + ((txtSource.Height - lblSource.Height) div 2);
+ lblFormat.Top:=cmbFormat.Top + ((cmbFormat.Height - lblFormat.Height) div 2);
+
+ {Adjust Buttons}
+ if txtSource.Height > cmdSource.Height then
+  begin
+   cmdSource.Height:=txtSource.Height;
+   cmdSource.Width:=txtSource.Height;
+   cmdSource.Top:=txtSource.Top + ((txtSource.Height - cmdSource.Height) div 2);
+  end
+ else
+  begin
+   cmdSource.Height:=txtSource.Height + 2;
+   cmdSource.Width:=txtSource.Height + 2;
+   cmdSource.Top:=txtSource.Top - 1;
+  end;
+
+ if cmdSource.Height > cmdOpen.Height then
+  begin
+   cmdOpen.Height:=cmdSource.Height;
+   cmdExport.Height:=cmdSource.Height;
+  end;
+
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
   begin

@@ -185,13 +185,39 @@ end;
 procedure TfrmExport.FormShow(Sender: TObject);
 begin
  {}
+ {Adjust Labels}
+ lblName.Top:=txtName.Top + ((txtName.Height - lblName.Height) div 2);
+ lblDescription.Top:=txtDescription.Top + ((txtDescription.Height - lblDescription.Height) div 2);
+ lblUnitName.Top:=txtUnitName.Top + ((txtUnitName.Height - lblUnitName.Height) div 2);
+ lblFileName.Top:=txtFileName.Top + ((txtFileName.Height - lblFileName.Height) div 2);
+
+ {Adjust Buttons}
+ if txtFileName.Height > cmdFileName.Height then
+  begin
+   cmdFileName.Height:=txtFileName.Height;
+   cmdFileName.Width:=txtFileName.Height;
+   cmdFileName.Top:=txtFileName.Top + ((txtFileName.Height - cmdFileName.Height) div 2);
+  end
+ else
+  begin
+   cmdFileName.Height:=txtFileName.Height + 2;
+   cmdFileName.Width:=txtFileName.Height + 2;
+   cmdFileName.Top:=txtFileName.Top - 1;
+  end;
+
+ if cmdFileName.Height > cmdExport.Height then
+  begin
+   cmdExport.Height:=cmdFileName.Height;
+   cmdCancel.Height:=cmdFileName.Height;
+  end;
+
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
   begin
    {Adjust Button}
-   cmdFileName.Top:=txtFileName.Top;
+   {cmdFileName.Top:=txtFileName.Top;
    cmdFileName.Height:=txtFileName.Height;
-   cmdFileName.Width:=cmdFileName.Height;
+   cmdFileName.Width:=cmdFileName.Height;}
  end;
 end;
 
@@ -209,7 +235,12 @@ procedure TfrmExport.cmdFileNameClick(Sender: TObject);
 begin
  {}
  saveMain.Title:='Export font';
+ {$IFDEF WINDOWS}
  saveMain.Filter:='Pascal source files|*.pas||All files|*.*';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ saveMain.Filter:='Pascal source files|*.pas||All files|*';
+ {$ENDIF}
  saveMain.Filename:=txtFileName.Text;
  if Length(saveMain.InitialDir) = 0 then
   begin

@@ -2,11 +2,11 @@ object frmMain: TfrmMain
   Left = 606
   Height = 261
   Top = 260
-  Width = 368
+  Width = 422
   BorderStyle = bsDialog
   Caption = 'Binary File to Type Definition'
   ClientHeight = 261
-  ClientWidth = 368
+  ClientWidth = 422
   Color = clBtnFace
   Font.Color = clWindowText
   Font.Height = -11
@@ -51,7 +51,7 @@ object frmMain: TfrmMain
     ParentColor = False
   end
   object lblSize2: TLabel
-    Left = 208
+    Left = 218
     Height = 13
     Top = 180
     Width = 75
@@ -67,9 +67,9 @@ object frmMain: TfrmMain
     ParentColor = False
   end
   object cmdConvert: TButton
-    Left = 196
+    Left = 244
     Height = 25
-    Top = 225
+    Top = 218
     Width = 75
     Anchors = [akRight, akBottom]
     Caption = 'Convert'
@@ -77,9 +77,9 @@ object frmMain: TfrmMain
     TabOrder = 7
   end
   object cmdExit: TButton
-    Left = 280
+    Left = 328
     Height = 25
-    Top = 225
+    Top = 218
     Width = 75
     Anchors = [akRight, akBottom]
     Caption = 'Exit'
@@ -87,25 +87,25 @@ object frmMain: TfrmMain
     TabOrder = 8
   end
   object txtSource: TEdit
-    Left = 100
+    Left = 109
     Height = 21
     Top = 24
-    Width = 229
+    Width = 263
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtSourceChange
     TabOrder = 0
   end
   object txtDest: TEdit
-    Left = 100
+    Left = 109
     Height = 21
     Top = 60
-    Width = 229
+    Width = 263
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtDestChange
     TabOrder = 2
   end
   object txtOffset: TEdit
-    Left = 116
+    Left = 120
     Height = 21
     Top = 140
     Width = 85
@@ -113,7 +113,7 @@ object frmMain: TfrmMain
     TabOrder = 5
   end
   object txtSize: TEdit
-    Left = 116
+    Left = 120
     Height = 21
     Top = 176
     Width = 85
@@ -121,30 +121,30 @@ object frmMain: TfrmMain
     TabOrder = 6
   end
   object cmdSource: TButton
-    Left = 332
-    Height = 21
-    Top = 24
-    Width = 21
+    Left = 380
+    Height = 23
+    Top = 23
+    Width = 23
     Anchors = [akTop, akRight]
     Caption = '...'
     OnClick = cmdSourceClick
     TabOrder = 1
   end
   object cmdDest: TButton
-    Left = 332
-    Height = 21
-    Top = 60
-    Width = 21
+    Left = 380
+    Height = 23
+    Top = 59
+    Width = 23
     Anchors = [akTop, akRight]
     Caption = '...'
     OnClick = cmdDestClick
     TabOrder = 3
   end
   object txtName: TEdit
-    Left = 116
+    Left = 120
     Height = 21
     Top = 104
-    Width = 237
+    Width = 283
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtNameChange
     TabOrder = 4

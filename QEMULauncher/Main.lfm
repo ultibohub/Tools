@@ -49,16 +49,16 @@ object frmMain: TfrmMain
     ParentColor = False
   end
   object txtProject: TEdit
-    Left = 84
+    Left = 90
     Height = 21
     Top = 16
-    Width = 469
+    Width = 460
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtProjectChange
     TabOrder = 0
   end
   object cmdProject: TButton
-    Left = 556
+    Left = 558
     Height = 23
     Top = 15
     Width = 23
@@ -68,7 +68,7 @@ object frmMain: TfrmMain
     TabOrder = 1
   end
   object cmbCPU: TComboBox
-    Left = 84
+    Left = 90
     Height = 21
     Top = 56
     Width = 145
@@ -78,7 +78,7 @@ object frmMain: TfrmMain
     TabOrder = 2
   end
   object cmbProcessor: TComboBox
-    Left = 84
+    Left = 90
     Height = 21
     Top = 96
     Width = 145
@@ -88,7 +88,7 @@ object frmMain: TfrmMain
     TabOrder = 3
   end
   object cmbController: TComboBox
-    Left = 84
+    Left = 90
     Height = 21
     Top = 136
     Width = 145
@@ -98,7 +98,7 @@ object frmMain: TfrmMain
     TabOrder = 4
   end
   object cmdLaunch: TButton
-    Left = 416
+    Left = 417
     Height = 25
     Top = 165
     Width = 75
@@ -108,7 +108,7 @@ object frmMain: TfrmMain
     TabOrder = 5
   end
   object cmdClose: TButton
-    Left = 500
+    Left = 506
     Height = 25
     Top = 165
     Width = 75

@@ -53,7 +53,9 @@
       <Unit2>
         <Filename Value="DlgExport.pas"/>
         <IsPartOfProject Value="True"/>
+        <ComponentName Value="frmExport"/>
         <HasResources Value="True"/>
+        <ResourceBaseClass Value="Form"/>
       </Unit2>
     </Units>
   </ProjectOptions>
