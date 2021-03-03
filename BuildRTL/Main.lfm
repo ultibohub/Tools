@@ -73,24 +73,24 @@ object frmMain: TfrmMain
       WordWrap = True
     end
     object cmdExit: TButton
-      Left = 821
+      Left = 781
       Height = 25
-      Top = 66
-      Width = 75
+      Top = 138
+      Width = 125
       Anchors = [akTop, akRight]
       Caption = 'Exit'
       OnClick = cmdExitClick
-      TabOrder = 0
+      TabOrder = 4
     end
     object cmdBuild: TButton
-      Left = 821
+      Left = 781
       Height = 25
-      Top = 26
-      Width = 75
+      Top = 108
+      Width = 125
       Anchors = [akTop, akRight]
-      Caption = 'Build'
+      Caption = 'Build Current RTL'
       OnClick = cmdBuildClick
-      TabOrder = 1
+      TabOrder = 3
     end
     object chkARMv6: TCheckBox
       Left = 26
@@ -100,7 +100,7 @@ object frmMain: TfrmMain
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero)'
       OnClick = chkARMv6Click
-      TabOrder = 2
+      TabOrder = 5
     end
     object chkARMv7: TCheckBox
       Left = 26
@@ -110,7 +110,7 @@ object frmMain: TfrmMain
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
       OnClick = chkARMv7Click
-      TabOrder = 3
+      TabOrder = 6
     end
     object chkARMv8: TCheckBox
       Left = 26
@@ -120,7 +120,7 @@ object frmMain: TfrmMain
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
       OnClick = chkARMv8Click
-      TabOrder = 4
+      TabOrder = 7
     end
     object progressMain: TProgressBar
       Left = 4
@@ -128,7 +128,41 @@ object frmMain: TfrmMain
       Top = 190
       Width = 915
       Anchors = [akTop, akLeft, akRight]
-      TabOrder = 5
+      TabOrder = 8
     end
+    object cmdCheck: TButton
+      Left = 781
+      Height = 25
+      Top = 18
+      Width = 125
+      Anchors = [akTop, akRight]
+      Caption = 'Check for Updates'
+      OnClick = cmdCheckClick
+      TabOrder = 0
+    end
+    object cmdDownload: TButton
+      Left = 781
+      Height = 25
+      Top = 48
+      Width = 125
+      Anchors = [akTop, akRight]
+      Caption = 'Download Latest RTL'
+      OnClick = cmdDownloadClick
+      TabOrder = 1
+    end
+    object cmdOffline: TButton
+      Left = 781
+      Height = 25
+      Top = 78
+      Width = 124
+      Anchors = [akTop, akRight]
+      Caption = 'Extract Offline RTL'
+      OnClick = cmdOfflineClick
+      TabOrder = 2
+    end
+  end
+  object openMain: TOpenDialog
+    left = 32
+    top = 584
   end
 end

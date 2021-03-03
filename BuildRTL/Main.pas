@@ -116,12 +116,16 @@ uses
   {$ENDIF}
   {$IFDEF LINUX}
   BaseUnix,
+  opensslsockets,
   {$ENDIF}
   Messages,
   SysUtils,
   Classes,
   {$IFDEF FPC}
   Process,
+  fphttpclient,
+  Zipper,
+  FileUtil,
   {$ENDIF}
   Graphics,
   Controls,
@@ -149,13 +153,23 @@ const
  SlashChar = '/';
  BuildScript = '__buildrtl.sh';
  {$ENDIF}
+ VersionId = '__version.id';
+ VersionLast = '__version.last';
+ DownloadZip = 'master.zip';
+ DefaultVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/master/source/';
+ DefaultDownloadURL = 'https://github.com/ultibohub/Core/archive/';
+
 
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    cmdDownload: TButton;
+    cmdOffline: TButton;
+    cmdCheck: TButton;
     mmoMain: TMemo;
+    openMain: TOpenDialog;
     progressMain: TProgressBar;
     sbMain: TStatusBar;
     pnlMain: TPanel;
@@ -167,6 +181,9 @@ type
     chkARMv7: TCheckBox;
     chkARMv8: TCheckBox;
     lblMain: TLabel;
+    procedure cmdCheckClick(Sender: TObject);
+    procedure cmdDownloadClick(Sender: TObject);
+    procedure cmdOfflineClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -194,9 +211,19 @@ type
     PlatformARMv6:Boolean;
     PlatformARMv7:Boolean;
     PlatformARMv8:Boolean;
+
+    VersionURL:String;
+    DownloadURL:String;
+
+    procedure DoProgress(Sender:TObject;const Percent:Double);
+    procedure DoDataReceived(Sender:TObject;const ContentLength,CurrentPos:Int64);
   public
     { Public declarations }
     function LoadConfig:Boolean;
+
+    function CheckForUpdates:Boolean;
+    function DownloadLatest:Boolean;
+    function ExtractFile(const AFilename:String):Boolean;
 
     function CreateBuildFile:Boolean;
     function ExecuteBuildFile:Boolean;
@@ -798,6 +825,9 @@ begin
  PlatformARMv7:=True;
  PlatformARMv8:=True;
 
+ VersionURL:=DefaultVersionURL;
+ DownloadURL:=DefaultDownloadURL;
+
  LoadConfig;
 
  {$IFDEF LINUX}
@@ -837,6 +867,9 @@ begin
    chkARMv6.Anchors:=[akLeft,akTop];
    chkARMv7.Anchors:=[akLeft,akTop];
    chkARMv8.Anchors:=[akLeft,akTop];
+   cmdCheck.Anchors:=[akLeft,akTop];
+   cmdDownload.Anchors:=[akLeft,akTop];
+   cmdOffline.Anchors:=[akLeft,akTop];
    cmdBuild.Anchors:=[akLeft,akTop];
    cmdExit.Anchors:=[akLeft,akTop];
 
@@ -845,37 +878,64 @@ begin
    Height:=Trunc(Height * Scale);
 
    {Move Buttons}
-   cmdBuild.Left:=pnlMain.Width - Trunc(100 * Scale); {907 - 807 = 100}
-   cmdExit.Left:=pnlMain.Width - Trunc(100 * Scale);  {907 - 807 = 100}
+   cmdCheck.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
+   cmdDownload.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
+   cmdOffline.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
+   cmdBuild.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
+   cmdExit.Left:=pnlMain.Width - Trunc(150 * Scale);  {907 - 757 = 150}
 
    {Enable Anchors}
    lblMain.Anchors:=[akLeft,akTop,akRight];
    chkARMv6.Anchors:=[akLeft,akTop,akRight];
    chkARMv7.Anchors:=[akLeft,akTop,akRight];
    chkARMv8.Anchors:=[akLeft,akTop,akRight];
+   cmdCheck.Anchors:=[akTop,akRight];
+   cmdDownload.Anchors:=[akTop,akRight];
+   cmdOffline.Anchors:=[akTop,akRight];
    cmdBuild.Anchors:=[akTop,akRight];
    cmdExit.Anchors:=[akTop,akRight];
+  end;
+
+ {Check Check Button}
+ if (cmdCheck.Left + cmdCheck.Width) > Width then
+  begin
+   {Adjust Check Button}
+   cmdCheck.Left:=ClientWidth - 150; {907 - 757 = 150}
+  end;
+
+ {Check Download Button}
+ if (cmdDownload.Left + cmdDownload.Width) > Width then
+  begin
+   {Adjust Download Button}
+   cmdDownload.Left:=ClientWidth - 150; {907 - 757 = 150}
+  end;
+
+ {Check Offline Button}
+ if (cmdOffline.Left + cmdOffline.Width) > Width then
+  begin
+   {Adjust Offline Button}
+   cmdOffline.Left:=ClientWidth - 150; {907 - 757 = 150}
   end;
 
  {Check Build Button}
  if (cmdBuild.Left + cmdBuild.Width) > Width then
   begin
    {Adjust Build Button}
-   cmdBuild.Left:=ClientWidth - 100; {907 - 807 = 100}
+   cmdBuild.Left:=ClientWidth - 150; {907 - 757 = 150}
   end;
 
  {Check Exit Button}
  if (cmdExit.Left + cmdExit.Width) > Width then
   begin
    {Adjust Exit Button}
-   cmdExit.Left:=ClientWidth - 100; {907 - 807 = 100}
+   cmdExit.Left:=ClientWidth - 150; {907 - 757 = 150}
   end;
 
  {Check Main Label}
  if (lblMain.Left + lblMain.Width) >= cmdBuild.Left then
   begin
     {Adjust Main Label}
-    lblMain.Width:=(cmdBuild.Left - lblMain.Left) - 100;
+    lblMain.Width:=(cmdBuild.Left - lblMain.Left) - 150;
   end;
 end;
 
@@ -921,6 +981,369 @@ end;
 
 {==============================================================================}
 
+procedure TfrmMain.cmdCheckClick(Sender: TObject);
+begin
+ {}
+ lblMain.Enabled:=False;
+ lblPlatforms.Enabled:=False;
+ chkARMv6.Enabled:=False;
+ chkARMv7.Enabled:=False;
+ chkARMv8.Enabled:=False;
+ cmdCheck.Enabled:=False;
+ cmdDownload.Enabled:=False;
+ cmdOffline.Enabled:=False;
+ cmdBuild.Enabled:=False;
+ cmdExit.Enabled:=False;
+ progressMain.Position:=0;
+ try
+  {Clear Memo}
+  mmoMain.Lines.Clear;
+
+  {Add Banner}
+  mmoMain.Lines.Add('Checking for Ultibo RTL Updates');
+  mmoMain.Lines.Add('');
+
+  {Add Version URL}
+  mmoMain.Lines.Add(' Version URL is ' + VersionURL);
+  mmoMain.Lines.Add('');
+
+  {Check for Updates}
+  if CheckForUpdates then
+   begin
+    {Prompt for Download}
+    if MessageDlg('An update is available for the Ultibo RTL, do you want to download and install it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
+     begin
+      {Add Banner}
+      mmoMain.Lines.Add('Downloading Latest Ultibo RTL');
+      mmoMain.Lines.Add('');
+
+      {Download Latest}
+      if not DownloadLatest then
+       begin
+        mmoMain.Lines.Add(' Error: Failed to download latest RTL');
+        Exit;
+       end;
+
+      {Add Banner}
+      mmoMain.Lines.Add('Extracting Ultibo RTL');
+      mmoMain.Lines.Add('');
+
+      {Extract File}
+      if not ExtractFile(DownloadZip) then
+       begin
+        mmoMain.Lines.Add(' Error: Failed to extract RTL');
+        Exit;
+       end;
+
+      {Add Banner}
+      mmoMain.Lines.Add('Building Ultibo RTL');
+      mmoMain.Lines.Add('');
+
+      {Add Path Prefix}
+      mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
+      mmoMain.Lines.Add('');
+      {Add Install Path}
+      mmoMain.Lines.Add(' Install Path is ' + InstallPath);
+      mmoMain.Lines.Add('');
+      {Add Compiler Name}
+      mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
+      mmoMain.Lines.Add('');
+      {Add Compiler Path}
+      mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
+      mmoMain.Lines.Add('');
+      {Add Source Path}
+      mmoMain.Lines.Add(' Source Path is ' + SourcePath);
+      mmoMain.Lines.Add('');
+
+      {Add ARM Compiler}
+      if Length(ARMCompiler) <> 0 then
+       begin
+        mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
+        mmoMain.Lines.Add('');
+       end;
+      {Add AARCH64 Compiler}
+      if Length(AARCH64Compiler) <> 0 then
+       begin
+        mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
+        mmoMain.Lines.Add('');
+       end;
+
+      {Create Build File}
+      mmoMain.Lines.Add(' Creating Build Script');
+      mmoMain.Lines.Add('');
+      if not CreateBuildFile then
+       begin
+        mmoMain.Lines.Add(' Error: Failed to create build script');
+        Exit;
+       end;
+
+      {Execute Build File}
+      mmoMain.Lines.Add(' Executing Build Script');
+      mmoMain.Lines.Add('');
+      if not ExecuteBuildFile then
+       begin
+        mmoMain.Lines.Add(' Error: Failed to execute build script');
+        Exit;
+       end;
+     end;
+   end;
+
+  {Add Footer}
+  mmoMain.Lines.Add('');
+  mmoMain.Lines.Add('Check Completed');
+  mmoMain.Lines.Add('');
+ finally
+  lblMain.Enabled:=True;
+  lblPlatforms.Enabled:=True;
+  chkARMv6.Enabled:=True;
+  chkARMv7.Enabled:=True;
+  chkARMv8.Enabled:=True;
+  cmdCheck.Enabled:=True;
+  cmdDownload.Enabled:=True;
+  cmdOffline.Enabled:=True;
+  cmdBuild.Enabled:=True;
+  cmdExit.Enabled:=True;
+ end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.cmdDownloadClick(Sender: TObject);
+begin
+ {}
+ lblMain.Enabled:=False;
+ lblPlatforms.Enabled:=False;
+ chkARMv6.Enabled:=False;
+ chkARMv7.Enabled:=False;
+ chkARMv8.Enabled:=False;
+ cmdCheck.Enabled:=False;
+ cmdDownload.Enabled:=False;
+ cmdOffline.Enabled:=False;
+ cmdBuild.Enabled:=False;
+ cmdExit.Enabled:=False;
+ progressMain.Position:=0;
+ try
+  {Clear Memo}
+  mmoMain.Lines.Clear;
+
+  {Add Banner}
+  mmoMain.Lines.Add('Downloading Latest Ultibo RTL');
+  mmoMain.Lines.Add('');
+
+  {Download Latest}
+  if not DownloadLatest then
+   begin
+    mmoMain.Lines.Add(' Error: Failed to download latest RTL');
+    Exit;
+   end;
+
+  {Prompt for Install}
+  if MessageDlg('The latest RTL has been downloaded, do you want to install it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
+   begin
+    {Add Banner}
+    mmoMain.Lines.Add('Extracting Ultibo RTL');
+    mmoMain.Lines.Add('');
+
+    {Extract File}
+    if not ExtractFile(DownloadZip) then
+     begin
+      mmoMain.Lines.Add(' Error: Failed to extract RTL');
+      Exit;
+     end;
+
+    {Add Banner}
+    mmoMain.Lines.Add('Building Ultibo RTL');
+    mmoMain.Lines.Add('');
+
+    {Add Path Prefix}
+    mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
+    mmoMain.Lines.Add('');
+    {Add Install Path}
+    mmoMain.Lines.Add(' Install Path is ' + InstallPath);
+    mmoMain.Lines.Add('');
+    {Add Compiler Name}
+    mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
+    mmoMain.Lines.Add('');
+    {Add Compiler Path}
+    mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
+    mmoMain.Lines.Add('');
+    {Add Source Path}
+    mmoMain.Lines.Add(' Source Path is ' + SourcePath);
+    mmoMain.Lines.Add('');
+
+    {Add ARM Compiler}
+    if Length(ARMCompiler) <> 0 then
+     begin
+      mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
+      mmoMain.Lines.Add('');
+     end;
+    {Add AARCH64 Compiler}
+    if Length(AARCH64Compiler) <> 0 then
+     begin
+      mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
+      mmoMain.Lines.Add('');
+     end;
+
+    {Create Build File}
+    mmoMain.Lines.Add(' Creating Build Script');
+    mmoMain.Lines.Add('');
+    if not CreateBuildFile then
+     begin
+      mmoMain.Lines.Add(' Error: Failed to create build script');
+      Exit;
+     end;
+
+    {Execute Build File}
+    mmoMain.Lines.Add(' Executing Build Script');
+    mmoMain.Lines.Add('');
+    if not ExecuteBuildFile then
+     begin
+      mmoMain.Lines.Add(' Error: Failed to execute build script');
+      Exit;
+     end;
+   end;
+
+  {Add Footer}
+  mmoMain.Lines.Add('');
+  mmoMain.Lines.Add('Download Completed');
+  mmoMain.Lines.Add('');
+ finally
+  lblMain.Enabled:=True;
+  lblPlatforms.Enabled:=True;
+  chkARMv6.Enabled:=True;
+  chkARMv7.Enabled:=True;
+  chkARMv8.Enabled:=True;
+  cmdCheck.Enabled:=True;
+  cmdDownload.Enabled:=True;
+  cmdOffline.Enabled:=True;
+  cmdBuild.Enabled:=True;
+  cmdExit.Enabled:=True;
+ end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.cmdOfflineClick(Sender: TObject);
+begin
+ {}
+ lblMain.Enabled:=False;
+ lblPlatforms.Enabled:=False;
+ chkARMv6.Enabled:=False;
+ chkARMv7.Enabled:=False;
+ chkARMv8.Enabled:=False;
+ cmdCheck.Enabled:=False;
+ cmdDownload.Enabled:=False;
+ cmdOffline.Enabled:=False;
+ cmdBuild.Enabled:=False;
+ cmdExit.Enabled:=False;
+ progressMain.Position:=0;
+ try
+  {Clear Memo}
+  mmoMain.Lines.Clear;
+
+  {Add Banner}
+  mmoMain.Lines.Add('Extracting Offline Ultibo RTL');
+  mmoMain.Lines.Add('');
+
+  {Browse for file}
+  openMain.Title:='Extract Offline RTL';
+  openMain.InitialDir:=ExtractFileDir(Application.ExeName);
+  {$IFDEF WINDOWS}
+  openMain.Filter:='Zip files (*.zip)|*.zip|All files (*.*)|*.*';
+  {$ENDIF}
+  {$IFDEF LINUX}
+  openMain.Filter:='Zip files (*.zip)|*.zip|All files (*.*)|*';
+  {$ENDIF}
+  if not openMain.Execute then Exit;
+
+  {Prompt for Extract}
+  if MessageDlg('Do you want to extract and install the RTL from the file "' + openMain.Filename + '", this will overwrite your existing RTL?',mtConfirmation,[mbYes,mbNo],0) <> mrYes then
+    begin
+     Exit;
+    end;
+
+  {Extract File}
+  if not ExtractFile(openMain.Filename) then
+   begin
+    mmoMain.Lines.Add(' Error: Failed to extract offline RTL');
+    Exit;
+   end;
+
+  {Prompt for Build}
+  if MessageDlg('The RTL has been extracted and installed, do you want to build it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
+   begin
+    {Add Banner}
+    mmoMain.Lines.Add('Building Ultibo RTL');
+    mmoMain.Lines.Add('');
+
+    {Add Path Prefix}
+    mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
+    mmoMain.Lines.Add('');
+    {Add Install Path}
+    mmoMain.Lines.Add(' Install Path is ' + InstallPath);
+    mmoMain.Lines.Add('');
+    {Add Compiler Name}
+    mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
+    mmoMain.Lines.Add('');
+    {Add Compiler Path}
+    mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
+    mmoMain.Lines.Add('');
+    {Add Source Path}
+    mmoMain.Lines.Add(' Source Path is ' + SourcePath);
+    mmoMain.Lines.Add('');
+
+    {Add ARM Compiler}
+    if Length(ARMCompiler) <> 0 then
+     begin
+      mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
+      mmoMain.Lines.Add('');
+     end;
+    {Add AARCH64 Compiler}
+    if Length(AARCH64Compiler) <> 0 then
+     begin
+      mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
+      mmoMain.Lines.Add('');
+     end;
+
+    {Create Build File}
+    mmoMain.Lines.Add(' Creating Build Script');
+    mmoMain.Lines.Add('');
+    if not CreateBuildFile then
+     begin
+      mmoMain.Lines.Add(' Error: Failed to create build script');
+      Exit;
+     end;
+
+    {Execute Build File}
+    mmoMain.Lines.Add(' Executing Build Script');
+    mmoMain.Lines.Add('');
+    if not ExecuteBuildFile then
+     begin
+      mmoMain.Lines.Add(' Error: Failed to execute build script');
+      Exit;
+     end;
+   end;
+
+  {Add Footer}
+  mmoMain.Lines.Add('');
+  mmoMain.Lines.Add('Extract Completed');
+  mmoMain.Lines.Add('');
+ finally
+  lblMain.Enabled:=True;
+  lblPlatforms.Enabled:=True;
+  chkARMv6.Enabled:=True;
+  chkARMv7.Enabled:=True;
+  chkARMv8.Enabled:=True;
+  cmdCheck.Enabled:=True;
+  cmdDownload.Enabled:=True;
+  cmdOffline.Enabled:=True;
+  cmdBuild.Enabled:=True;
+  cmdExit.Enabled:=True;
+ end;
+end;
+
+{==============================================================================}
+
 procedure TfrmMain.cmdBuildClick(Sender: TObject);
 begin
  {}
@@ -929,14 +1352,18 @@ begin
  chkARMv6.Enabled:=False;
  chkARMv7.Enabled:=False;
  chkARMv8.Enabled:=False;
+ cmdCheck.Enabled:=False;
+ cmdDownload.Enabled:=False;
+ cmdOffline.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
+ progressMain.Position:=0;
  try
   {Clear Memo}
   mmoMain.Lines.Clear;
 
   {Add Banner}
-  mmoMain.Lines.Add('Building Ultibo RTL');
+  mmoMain.Lines.Add('Building Current Ultibo RTL');
   mmoMain.Lines.Add('');
 
   {Add Path Prefix}
@@ -996,9 +1423,40 @@ begin
   chkARMv6.Enabled:=True;
   chkARMv7.Enabled:=True;
   chkARMv8.Enabled:=True;
+  cmdCheck.Enabled:=True;
+  cmdDownload.Enabled:=True;
+  cmdOffline.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
  end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.DoProgress(Sender:TObject;const Percent:Double);
+begin
+ {}
+ progressMain.Position:=Trunc(Percent);
+ Application.ProcessMessages;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.DoDataReceived(Sender:TObject;const ContentLength,CurrentPos:Int64);
+begin
+ {}
+ if ContentLength > 0 then
+  begin
+   if CurrentPos < ContentLength then
+    begin
+     progressMain.Position:=Trunc((CurrentPos / ContentLength) * 100);
+    end
+   else
+    begin
+     progressMain.Position:=100;
+    end;
+   Application.ProcessMessages;
+  end;
 end;
 
 {==============================================================================}
@@ -1051,6 +1509,11 @@ begin
      PlatformARMv7:=IniFile.ReadBool(Section,'PlatformARMv7',PlatformARMv7);
      {Get PlatformARMv8}
      PlatformARMv8:=IniFile.ReadBool(Section,'PlatformARMv8',PlatformARMv8);
+
+     {Get VersionURL}
+     VersionURL:=IniFile.ReadString(Section,'VersionURL',VersionURL);
+     {Get DownloadURL}
+     DownloadURL:=IniFile.ReadString(Section,'DownloadURL',DownloadURL);
     finally
      IniFile.Free;
     end;
@@ -1059,6 +1522,283 @@ begin
   Result:=True;
  except
   {}
+ end;
+end;
+
+function TfrmMain.CheckForUpdates:Boolean;
+var
+ FileURL:String;
+ Filename:String;
+ Lastname:String;
+ Lines:TStringList;
+ FileVersion:String;
+ LastVersion:String;
+ Client:TFPHTTPClient;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(SourcePath) = 0 then Exit;
+  if Length(VersionURL) = 0 then Exit;
+
+  {Check Source Path}
+  if not DirectoryExists(StripTrailingSlash(SourcePath)) then
+   begin
+    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
+    mmoMain.Lines.Add('');
+    Exit;
+   end;
+
+  {Get FileURL}
+  FileURL:=VersionURL + VersionId;
+  mmoMain.Lines.Add('  Version File URL is ' + FileURL);
+  mmoMain.Lines.Add('');
+
+  {Get Filename}
+  Filename:=AddTrailingSlash(SourcePath) + VersionId;
+  mmoMain.Lines.Add('  Latest Version Filename is ' + Filename);
+  mmoMain.Lines.Add('');
+
+  {Get Lastname}
+  Lastname:=AddTrailingSlash(SourcePath) + VersionLast;
+  mmoMain.Lines.Add('  Current Version Filename is ' + Lastname);
+  mmoMain.Lines.Add('');
+
+  {Set Defaults}
+  FileVersion:='<Unknown>';
+  LastVersion:='<Unknown>';
+
+  {Check File}
+  if FileExists(Filename) then
+   begin
+    {Delete File}
+    DeleteFile(Filename);
+
+    if FileExists(Filename) then Exit;
+   end;
+
+  {Create HTTP Client}
+  Client:=TFPHTTPClient.Create(nil);
+  try
+   Client.AllowRedirect:=True;
+
+   {Get Version File}
+   mmoMain.Lines.Add('  Downloading file: ' + VersionId);
+   mmoMain.Lines.Add('');
+   Client.Get(FileURL,Filename);
+
+   Lines:=TStringList.Create;
+   try
+    {Open Version File}
+    Lines.LoadFromFile(Filename);
+    if Lines.Count = 0 then
+     begin
+      mmoMain.Lines.Add(' Error: Latest version file contains no data');
+      mmoMain.Lines.Add('');
+      Exit;
+     end;
+
+    {Get File Version}
+    FileVersion:=Lines.Strings[0];
+    mmoMain.Lines.Add('  Latest Version is ' + FileVersion);
+    mmoMain.Lines.Add('');
+
+    {Open Last Version File}
+    if FileExists(Lastname) then
+     begin
+      Lines.Clear;
+      Lines.LoadFromFile(Lastname);
+      if Lines.Count = 0 then
+       begin
+        mmoMain.Lines.Add(' Error: Current version file contains no data');
+        mmoMain.Lines.Add('');
+        Exit;
+       end;
+
+      {Get Last Version}
+      LastVersion:=Lines.Strings[0];
+     end;
+    mmoMain.Lines.Add('  Current Version is ' + LastVersion);
+    mmoMain.Lines.Add('');
+
+    Result:=(LastVersion <> FileVersion);
+   finally
+    Lines.Free;
+   end;
+  finally
+   Client.Free;
+  end;
+ except
+  on E: Exception do
+   begin
+    mmoMain.Lines.Add(' Error: Exception checking for RTL updates - Message: ' + E.Message);
+   end;
+ end;
+end;
+
+{==============================================================================}
+
+function TfrmMain.DownloadLatest:Boolean;
+var
+ FileURL:String;
+ Filename:String;
+ Client:TFPHTTPClient;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(SourcePath) = 0 then Exit;
+  if Length(DownloadURL) = 0 then Exit;
+
+  {Check Source Path}
+  if not DirectoryExists(StripTrailingSlash(SourcePath)) then
+   begin
+    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
+    mmoMain.Lines.Add('');
+    Exit;
+   end;
+
+  {Get FileURL}
+  FileURL:=DownloadURL + DownloadZip;
+  mmoMain.Lines.Add('  Download File URL is ' + FileURL);
+  mmoMain.Lines.Add('');
+
+  {Get Filename}
+  Filename:=AddTrailingSlash(SourcePath) + DownloadZip;
+  mmoMain.Lines.Add('  Download Filename is ' + Filename);
+  mmoMain.Lines.Add('');
+
+  {Check File}
+  if FileExists(Filename) then
+   begin
+    {Delete File}
+    DeleteFile(Filename);
+
+    if FileExists(Filename) then Exit;
+   end;
+
+  {Create HTTP Client}
+  Client:=TFPHTTPClient.Create(nil);
+  try
+   Client.AllowRedirect:=True;
+   Client.OnDataReceived:=DoDataReceived;
+
+   {Get Zip File}
+   mmoMain.Lines.Add('  Downloading file: ' + DownloadZip);
+   mmoMain.Lines.Add('');
+   Client.Get(FileURL,Filename);
+
+   Result := True;
+  finally
+   Client.Free;
+  end;
+ except
+  on E: Exception do
+   begin
+    mmoMain.Lines.Add(' Error: Exception downloading latest RTL - Message: ' + E.Message);
+   end;
+ end;
+end;
+
+{==============================================================================}
+
+function TfrmMain.ExtractFile(const AFilename:String):Boolean;
+var
+ Pathname:String;
+ Tempname:String;
+ Filename:String;
+ Destname:String;
+ Sourcename:String;
+ UnZipper:TUnZipper;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(AFilename) = 0 then Exit;
+
+  {Check Source Path}
+  if not DirectoryExists(StripTrailingSlash(SourcePath)) then
+   begin
+    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
+    mmoMain.Lines.Add('');
+    Exit;
+   end;
+
+  {Get Filename}
+  Filename:=AFilename;
+  if ExtractFilePath(Filename) = '' then
+   begin
+    Filename:=AddTrailingSlash(SourcePath) + Filename;
+   end;
+  mmoMain.Lines.Add('  Filename is ' + Filename);
+  mmoMain.Lines.Add('');
+
+  {Get Pathname}
+  Pathname:=StripTrailingSlash(SourcePath);
+  mmoMain.Lines.Add('  Pathname is ' + Pathname);
+  mmoMain.Lines.Add('');
+
+  {Get Tempname}
+  Tempname:=AddTrailingSlash(SourcePath) + '__temp';
+
+  {Check Tempname}
+  if DirectoryExists(Tempname) then
+   begin
+    DeleteDirectory(Tempname,True);
+   end;
+  if not DirectoryExists(Tempname) then
+   begin
+    CreateDir(Tempname);
+
+    if not DirectoryExists(Tempname) then Exit;
+   end;
+
+  {Create Unzipper}
+  UnZipper:=TUnZipper.Create;
+  try
+   UnZipper.OnProgress:=DoProgress;
+   UnZipper.FileName:=Filename;
+   UnZipper.OutputPath:=Tempname;
+
+   {Extract Zip File}
+   mmoMain.Lines.Add('  Extracting file: ' + AFilename);
+   mmoMain.Lines.Add('');
+   UnZipper.Examine;
+   UnZipper.UnZipAllFiles;
+
+   {Get Source and Destination}
+   Destname:=ExtractFileDir(Pathname);
+   Sourcename:=AddTrailingSlash(Tempname) + 'Core-master';
+
+   {Copy Files}
+   if CopyDirTree(Sourcename,Destname,[cffOverwriteFile,cffCreateDestDirectory,cffPreserveTime]) then
+    begin
+     {Cleanup Tempname}
+     DeleteDirectory(Tempname,False);
+
+     {Get Source and Destination}
+     Destname:=AddTrailingSlash(Pathname) + VersionLast;
+     Sourcename:=AddTrailingSlash(Pathname) + VersionId;
+
+     {Check Destname}
+     if FileExists(Destname) then
+      begin
+       DeleteFile(Destname);
+
+       if FileExists(Destname) then Exit;
+      end;
+
+     {Rename Version File}
+     Result:=RenameFile(Sourcename,Destname);
+    end;
+  finally
+   UnZipper.Free;
+  end;
+ except
+  on E: Exception do
+   begin
+    mmoMain.Lines.Add(' Error: Exception extracting RTL - Message: ' + E.Message);
+   end;
  end;
 end;
 
@@ -1948,7 +2688,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception creating build script - Message: ' + E.Message);
+    mmoMain.Lines.Add(' Error: Exception creating RTL build script - Message: ' + E.Message);
    end;
  end;
 end;
@@ -2000,7 +2740,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception executing build script - Message: ' + E.Message);
+    mmoMain.Lines.Add(' Error: Exception executing RTL build script - Message: ' + E.Message);
    end;
  end;
 end;
