@@ -13,7 +13,7 @@ Bin2Type - A utility to turn any binary file into a pascal variable which can be
 
 BuildRTL - The Ultibo RTL Builder tool
 
-ConfigureRTL - A utility used by the installer to update the FPC and Lazarus configuratgion
+ConfigureRTL - A utility used by the installer to update the FPC and Lazarus configuration
 
 FontBuilder - A tool to convert common bitmap fonts to a pascal unit for inclusion in projects
 

@@ -18,8 +18,8 @@ object frmMain: TfrmMain
   LCLVersion = '2.0.2.0'
   object mmoMain: TMemo
     Left = 0
-    Height = 444
-    Top = 201
+    Height = 412
+    Top = 233
     Width = 923
     Align = alClient
     Color = clBtnFace
@@ -37,33 +37,36 @@ object frmMain: TfrmMain
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 201
+    Height = 233
     Top = 0
     Width = 923
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 201
+    ClientHeight = 233
     ClientWidth = 923
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 2
     object lblCompiler: TLabel
       Left = 18
       Height = 13
-      Top = 168
+      Top = 200
       Width = 75
+      Anchors = [akLeft, akBottom]
       Caption = 'Compiler Output'
       ParentColor = False
     end
     object lblPlatforms: TLabel
       Left = 18
       Height = 13
-      Top = 66
+      Top = 92
       Width = 76
       Caption = 'Select Platforms'
       ParentColor = False
     end
     object lblMain: TLabel
       Left = 18
-      Height = 39
+      Height = 63
       Top = 18
       Width = 697
       Anchors = [akTop, akLeft, akRight]
@@ -75,64 +78,67 @@ object frmMain: TfrmMain
     object cmdExit: TButton
       Left = 781
       Height = 25
-      Top = 138
+      Hint = 'Exit the Ultibo RTL Builder'
+      Top = 168
       Width = 125
       Anchors = [akTop, akRight]
       Caption = 'Exit'
       OnClick = cmdExitClick
-      TabOrder = 4
+      TabOrder = 5
     end
     object cmdBuild: TButton
       Left = 781
       Height = 25
-      Top = 108
+      Hint = 'Rebuild the current copy of the Ultibo RTL'
+      Top = 138
       Width = 125
       Anchors = [akTop, akRight]
       Caption = 'Build Current RTL'
       OnClick = cmdBuildClick
-      TabOrder = 3
+      TabOrder = 4
     end
     object chkARMv6: TCheckBox
       Left = 26
       Height = 19
-      Top = 90
+      Top = 116
       Width = 716
       Anchors = [akTop, akLeft, akRight]
-      Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero)'
+      Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero/ZeroW)'
       OnClick = chkARMv6Click
-      TabOrder = 5
+      TabOrder = 6
     end
     object chkARMv7: TCheckBox
       Left = 26
       Height = 19
-      Top = 114
+      Top = 140
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
       OnClick = chkARMv7Click
-      TabOrder = 6
+      TabOrder = 7
     end
     object chkARMv8: TCheckBox
       Left = 26
       Height = 19
-      Top = 138
+      Top = 164
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
       OnClick = chkARMv8Click
-      TabOrder = 7
+      TabOrder = 8
     end
     object progressMain: TProgressBar
       Left = 4
       Height = 10
-      Top = 190
+      Top = 222
       Width = 915
-      Anchors = [akTop, akLeft, akRight]
-      TabOrder = 8
+      Anchors = [akLeft, akRight, akBottom]
+      TabOrder = 9
     end
     object cmdCheck: TButton
       Left = 781
       Height = 25
+      Hint = 'Check for a new vesion of the Ultibo RTL'
       Top = 18
       Width = 125
       Anchors = [akTop, akRight]
@@ -143,6 +149,7 @@ object frmMain: TfrmMain
     object cmdDownload: TButton
       Left = 781
       Height = 25
+      Hint = 'Download the lastest version of the Ultibo RTL'
       Top = 48
       Width = 125
       Anchors = [akTop, akRight]
@@ -153,11 +160,23 @@ object frmMain: TfrmMain
     object cmdOffline: TButton
       Left = 781
       Height = 25
-      Top = 78
+      Hint = 'Extract a zip file containing a previously downloaded Ultibo RTL'
+      Top = 108
       Width = 124
       Anchors = [akTop, akRight]
       Caption = 'Extract Offline RTL'
       OnClick = cmdOfflineClick
+      TabOrder = 3
+    end
+    object cmdFirmware: TButton
+      Left = 780
+      Height = 25
+      Hint = 'Download the lastest supported Raspberry Pi firmware'
+      Top = 78
+      Width = 125
+      Anchors = [akTop, akRight]
+      Caption = 'Download Firmware'
+      OnClick = cmdFirmwareClick
       TabOrder = 2
     end
   end

@@ -48,6 +48,7 @@ RTL Builder
  CompilerPath=
  CompilerVersion=
  SourcePath=
+ FirmwarePath=
 
  ARMCompiler=
  AARCH64Compiler=
@@ -78,6 +79,9 @@ RTL Builder
 
  SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
                                                        (        Linux: <CompilerPath>/source)
+
+ FirmwarePath = The path where firmware files are located (Default Windows: <InstallPath>\firmware)
+                                                          (        Linux: <InstallPath>/firmware)
 
  ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
 
@@ -159,12 +163,49 @@ const
  DefaultVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/master/source/';
  DefaultDownloadURL = 'https://github.com/ultibohub/Core/archive/';
 
+ FirmwareId = '__firmware.id';
+ FirmwareLast = '__firmware.last';
+ DefaultFirmwareVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/master/source/';
+ DefaultFirmwareDownloadURL = 'https://github.com/raspberrypi/firmware/raw/';
+
+ FirmwareDownloadFolder = '/boot/';
+ FirmwareDownloadFiles:array[0..16] of String = (
+  {RPi/RPi2/RPi3 firmware files}
+  'bootcode.bin',
+  'fixup.dat',
+  'fixup_cd.dat',
+  'fixup_db.dat',
+  'fixup_x.dat',
+  'start.elf',
+  'start_cd.elf',
+  'start_db.elf',
+  'start_x.elf',
+  {RPi4 firmware files}
+  'fixup4.dat',
+  'fixup4cd.dat',
+  'fixup4db.dat',
+  'fixup4x.dat',
+  'start4.elf',
+  'start4cd.elf',
+  'start4db.elf',
+  'start4x.elf');
+
+ FirmwareDownloadFolderRPi = 'RPi';
+ FirmwareDownloadFolderRPi2 = 'RPi2';
+ FirmwareDownloadFolderRPi3 = 'RPi3';
+ FirmwareDownloadFolderRPi4 = 'RPi4';
+
+ FirmwareDownloadFilesStartRPi = 0;
+ FirmwareDownloadFilesCountRPi = 9;
+ FirmwareDownloadFilesStartRPi4 = 9;
+ FirmwareDownloadFilesCountRPi4 = 8;
 
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    cmdFirmware: TButton;
     cmdDownload: TButton;
     cmdOffline: TButton;
     cmdCheck: TButton;
@@ -183,6 +224,7 @@ type
     lblMain: TLabel;
     procedure cmdCheckClick(Sender: TObject);
     procedure cmdDownloadClick(Sender: TObject);
+    procedure cmdFirmwareClick(Sender: TObject);
     procedure cmdOfflineClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
@@ -198,6 +240,7 @@ type
     PathPrefix:String;
     InstallPath:String;
     SourcePath:String;
+    FirmwarePath:String;
     CompilerName:String;
     CompilerPath:String;
     CompilerVersion:String;
@@ -215,6 +258,11 @@ type
     VersionURL:String;
     DownloadURL:String;
 
+    FirmwareVersionURL:String;
+    FirmwareDownloadURL:String;
+
+    procedure LogOutput(const AValue:String);
+
     procedure DoProgress(Sender:TObject;const Percent:Double);
     procedure DoDataReceived(Sender:TObject;const ContentLength,CurrentPos:Int64);
   public
@@ -227,6 +275,8 @@ type
 
     function CreateBuildFile:Boolean;
     function ExecuteBuildFile:Boolean;
+
+    function DownloadFirmware:Boolean;
   end;
 
 var
@@ -812,6 +862,15 @@ begin
  SourcePath:=CompilerPath + '/source';
  {$ENDIF}
 
+ {$IFDEF WINDOWS}
+ {Assume that the firmware path will be \firmware under the InstallPath}
+ FirmwarePath:=InstallPath + '\firmware';
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {Assume that the firmware path will be /firmware under the InstallPath}
+ FirmwarePath:=InstallPath + '/firmware';
+ {$ENDIF}
+
  {The names of the ARM compiler or cross compiler}
  ARMCompiler:='';
 
@@ -827,6 +886,9 @@ begin
 
  VersionURL:=DefaultVersionURL;
  DownloadURL:=DefaultDownloadURL;
+
+ FirmwareVersionURL:=DefaultFirmwareVersionURL;
+ FirmwareDownloadURL:=DefaultFirmwareDownloadURL;
 
  LoadConfig;
 
@@ -869,6 +931,7 @@ begin
    chkARMv8.Anchors:=[akLeft,akTop];
    cmdCheck.Anchors:=[akLeft,akTop];
    cmdDownload.Anchors:=[akLeft,akTop];
+   cmdFirmware.Anchors:=[akLeft,akTop];
    cmdOffline.Anchors:=[akLeft,akTop];
    cmdBuild.Anchors:=[akLeft,akTop];
    cmdExit.Anchors:=[akLeft,akTop];
@@ -880,6 +943,7 @@ begin
    {Move Buttons}
    cmdCheck.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdDownload.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
+   cmdFirmware.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdOffline.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdBuild.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdExit.Left:=pnlMain.Width - Trunc(150 * Scale);  {907 - 757 = 150}
@@ -891,6 +955,7 @@ begin
    chkARMv8.Anchors:=[akLeft,akTop,akRight];
    cmdCheck.Anchors:=[akTop,akRight];
    cmdDownload.Anchors:=[akTop,akRight];
+   cmdFirmware.Anchors:=[akTop,akRight];
    cmdOffline.Anchors:=[akTop,akRight];
    cmdBuild.Anchors:=[akTop,akRight];
    cmdExit.Anchors:=[akTop,akRight];
@@ -908,6 +973,13 @@ begin
   begin
    {Adjust Download Button}
    cmdDownload.Left:=ClientWidth - 150; {907 - 757 = 150}
+  end;
+
+ {Check Firmware Button}
+ if (cmdFirmware.Left + cmdFirmware.Width) > Width then
+  begin
+   {Adjust Firmware Button}
+   cmdFirmware.Left:=ClientWidth - 150; {907 - 757 = 150}
   end;
 
  {Check Offline Button}
@@ -991,6 +1063,7 @@ begin
  chkARMv8.Enabled:=False;
  cmdCheck.Enabled:=False;
  cmdDownload.Enabled:=False;
+ cmdFirmware.Enabled:=False;
  cmdOffline.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
@@ -1000,12 +1073,12 @@ begin
   mmoMain.Lines.Clear;
 
   {Add Banner}
-  mmoMain.Lines.Add('Checking for Ultibo RTL Updates');
-  mmoMain.Lines.Add('');
+  LogOutput('Checking for Ultibo RTL Updates');
+  LogOutput('');
 
   {Add Version URL}
-  mmoMain.Lines.Add(' Version URL is ' + VersionURL);
-  mmoMain.Lines.Add('');
+  LogOutput(' Version URL is ' + VersionURL);
+  LogOutput('');
 
   {Check for Updates}
   if CheckForUpdates then
@@ -1014,84 +1087,95 @@ begin
     if MessageDlg('An update is available for the Ultibo RTL, do you want to download and install it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
      begin
       {Add Banner}
-      mmoMain.Lines.Add('Downloading Latest Ultibo RTL');
-      mmoMain.Lines.Add('');
+      LogOutput('Downloading Latest Ultibo RTL');
+      LogOutput('');
 
       {Download Latest}
       if not DownloadLatest then
        begin
-        mmoMain.Lines.Add(' Error: Failed to download latest RTL');
+        LogOutput(' Error: Failed to download latest RTL');
         Exit;
        end;
 
       {Add Banner}
-      mmoMain.Lines.Add('Extracting Ultibo RTL');
-      mmoMain.Lines.Add('');
+      LogOutput('Extracting Ultibo RTL');
+      LogOutput('');
 
       {Extract File}
       if not ExtractFile(DownloadZip) then
        begin
-        mmoMain.Lines.Add(' Error: Failed to extract RTL');
+        LogOutput(' Error: Failed to extract RTL');
         Exit;
        end;
 
       {Add Banner}
-      mmoMain.Lines.Add('Building Ultibo RTL');
-      mmoMain.Lines.Add('');
+      LogOutput('Building Ultibo RTL');
+      LogOutput('');
 
       {Add Path Prefix}
-      mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
-      mmoMain.Lines.Add('');
+      LogOutput(' Path Prefix is ' + PathPrefix);
+      LogOutput('');
       {Add Install Path}
-      mmoMain.Lines.Add(' Install Path is ' + InstallPath);
-      mmoMain.Lines.Add('');
+      LogOutput(' Install Path is ' + InstallPath);
+      LogOutput('');
       {Add Compiler Name}
-      mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
-      mmoMain.Lines.Add('');
+      LogOutput(' Compiler Name is ' + CompilerName);
+      LogOutput('');
       {Add Compiler Path}
-      mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
-      mmoMain.Lines.Add('');
+      LogOutput(' Compiler Path is ' + CompilerPath);
+      LogOutput('');
       {Add Source Path}
-      mmoMain.Lines.Add(' Source Path is ' + SourcePath);
-      mmoMain.Lines.Add('');
+      LogOutput(' Source Path is ' + SourcePath);
+      LogOutput('');
 
       {Add ARM Compiler}
       if Length(ARMCompiler) <> 0 then
        begin
-        mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
-        mmoMain.Lines.Add('');
+        LogOutput(' ARM Compiler is ' + ARMCompiler);
+        LogOutput('');
        end;
       {Add AARCH64 Compiler}
       if Length(AARCH64Compiler) <> 0 then
        begin
-        mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
-        mmoMain.Lines.Add('');
+        LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+        LogOutput('');
        end;
 
       {Create Build File}
-      mmoMain.Lines.Add(' Creating Build Script');
-      mmoMain.Lines.Add('');
+      LogOutput(' Creating Build Script');
+      LogOutput('');
       if not CreateBuildFile then
        begin
-        mmoMain.Lines.Add(' Error: Failed to create build script');
+        LogOutput(' Error: Failed to create build script');
         Exit;
        end;
 
       {Execute Build File}
-      mmoMain.Lines.Add(' Executing Build Script');
-      mmoMain.Lines.Add('');
+      LogOutput(' Executing Build Script');
+      LogOutput('');
       if not ExecuteBuildFile then
        begin
-        mmoMain.Lines.Add(' Error: Failed to execute build script');
+        LogOutput(' Error: Failed to execute build script');
         Exit;
        end;
      end;
    end;
 
+  {Add Banner}
+  LogOutput('Checking for Raspberry Pi Firmware Updates');
+  LogOutput('');
+
+  {Check and Download Firmware}
+  if not DownloadFirmware then
+   begin
+    LogOutput(' Error: Failed to download latest firmware');
+    Exit;
+   end;
+
   {Add Footer}
-  mmoMain.Lines.Add('');
-  mmoMain.Lines.Add('Check Completed');
-  mmoMain.Lines.Add('');
+  LogOutput('');
+  LogOutput('Check Completed');
+  LogOutput('');
  finally
   lblMain.Enabled:=True;
   lblPlatforms.Enabled:=True;
@@ -1100,6 +1184,7 @@ begin
   chkARMv8.Enabled:=True;
   cmdCheck.Enabled:=True;
   cmdDownload.Enabled:=True;
+  cmdFirmware.Enabled:=True;
   cmdOffline.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
@@ -1118,6 +1203,7 @@ begin
  chkARMv8.Enabled:=False;
  cmdCheck.Enabled:=False;
  cmdDownload.Enabled:=False;
+ cmdFirmware.Enabled:=False;
  cmdOffline.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
@@ -1127,13 +1213,13 @@ begin
   mmoMain.Lines.Clear;
 
   {Add Banner}
-  mmoMain.Lines.Add('Downloading Latest Ultibo RTL');
-  mmoMain.Lines.Add('');
+  LogOutput('Downloading Latest Ultibo RTL');
+  LogOutput('');
 
   {Download Latest}
   if not DownloadLatest then
    begin
-    mmoMain.Lines.Add(' Error: Failed to download latest RTL');
+    LogOutput(' Error: Failed to download latest RTL');
     Exit;
    end;
 
@@ -1141,72 +1227,72 @@ begin
   if MessageDlg('The latest RTL has been downloaded, do you want to install it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
    begin
     {Add Banner}
-    mmoMain.Lines.Add('Extracting Ultibo RTL');
-    mmoMain.Lines.Add('');
+    LogOutput('Extracting Ultibo RTL');
+    LogOutput('');
 
     {Extract File}
     if not ExtractFile(DownloadZip) then
      begin
-      mmoMain.Lines.Add(' Error: Failed to extract RTL');
+      LogOutput(' Error: Failed to extract RTL');
       Exit;
      end;
 
     {Add Banner}
-    mmoMain.Lines.Add('Building Ultibo RTL');
-    mmoMain.Lines.Add('');
+    LogOutput('Building Ultibo RTL');
+    LogOutput('');
 
     {Add Path Prefix}
-    mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
-    mmoMain.Lines.Add('');
+    LogOutput(' Path Prefix is ' + PathPrefix);
+    LogOutput('');
     {Add Install Path}
-    mmoMain.Lines.Add(' Install Path is ' + InstallPath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Install Path is ' + InstallPath);
+    LogOutput('');
     {Add Compiler Name}
-    mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
-    mmoMain.Lines.Add('');
+    LogOutput(' Compiler Name is ' + CompilerName);
+    LogOutput('');
     {Add Compiler Path}
-    mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Compiler Path is ' + CompilerPath);
+    LogOutput('');
     {Add Source Path}
-    mmoMain.Lines.Add(' Source Path is ' + SourcePath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Source Path is ' + SourcePath);
+    LogOutput('');
 
     {Add ARM Compiler}
     if Length(ARMCompiler) <> 0 then
      begin
-      mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
-      mmoMain.Lines.Add('');
+      LogOutput(' ARM Compiler is ' + ARMCompiler);
+      LogOutput('');
      end;
     {Add AARCH64 Compiler}
     if Length(AARCH64Compiler) <> 0 then
      begin
-      mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
-      mmoMain.Lines.Add('');
+      LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+      LogOutput('');
      end;
 
     {Create Build File}
-    mmoMain.Lines.Add(' Creating Build Script');
-    mmoMain.Lines.Add('');
+    LogOutput(' Creating Build Script');
+    LogOutput('');
     if not CreateBuildFile then
      begin
-      mmoMain.Lines.Add(' Error: Failed to create build script');
+      LogOutput(' Error: Failed to create build script');
       Exit;
      end;
 
     {Execute Build File}
-    mmoMain.Lines.Add(' Executing Build Script');
-    mmoMain.Lines.Add('');
+    LogOutput(' Executing Build Script');
+    LogOutput('');
     if not ExecuteBuildFile then
      begin
-      mmoMain.Lines.Add(' Error: Failed to execute build script');
+      LogOutput(' Error: Failed to execute build script');
       Exit;
      end;
    end;
 
   {Add Footer}
-  mmoMain.Lines.Add('');
-  mmoMain.Lines.Add('Download Completed');
-  mmoMain.Lines.Add('');
+  LogOutput('');
+  LogOutput('Download Completed');
+  LogOutput('');
  finally
   lblMain.Enabled:=True;
   lblPlatforms.Enabled:=True;
@@ -1215,6 +1301,57 @@ begin
   chkARMv8.Enabled:=True;
   cmdCheck.Enabled:=True;
   cmdDownload.Enabled:=True;
+  cmdFirmware.Enabled:=True;
+  cmdOffline.Enabled:=True;
+  cmdBuild.Enabled:=True;
+  cmdExit.Enabled:=True;
+ end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.cmdFirmwareClick(Sender: TObject);
+begin
+ lblMain.Enabled:=False;
+ lblPlatforms.Enabled:=False;
+ chkARMv6.Enabled:=False;
+ chkARMv7.Enabled:=False;
+ chkARMv8.Enabled:=False;
+ cmdCheck.Enabled:=False;
+ cmdDownload.Enabled:=False;
+ cmdFirmware.Enabled:=False;
+ cmdOffline.Enabled:=False;
+ cmdBuild.Enabled:=False;
+ cmdExit.Enabled:=False;
+ progressMain.Position:=0;
+ try
+  {Clear Memo}
+  mmoMain.Lines.Clear;
+
+  {Add Banner}
+  LogOutput('Downloading Latest Raspberry Pi Firmware');
+  LogOutput('');
+
+  {Download Firmware}
+  if not DownloadFirmware then
+   begin
+    LogOutput(' Error: Failed to download latest firmware');
+    Exit;
+   end;
+
+  {Add Footer}
+  LogOutput('');
+  LogOutput('Download Completed');
+  LogOutput('');
+ finally
+  lblMain.Enabled:=True;
+  lblPlatforms.Enabled:=True;
+  chkARMv6.Enabled:=True;
+  chkARMv7.Enabled:=True;
+  chkARMv8.Enabled:=True;
+  cmdCheck.Enabled:=True;
+  cmdDownload.Enabled:=True;
+  cmdFirmware.Enabled:=True;
   cmdOffline.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
@@ -1233,6 +1370,7 @@ begin
  chkARMv8.Enabled:=False;
  cmdCheck.Enabled:=False;
  cmdDownload.Enabled:=False;
+ cmdFirmware.Enabled:=False;
  cmdOffline.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
@@ -1242,8 +1380,8 @@ begin
   mmoMain.Lines.Clear;
 
   {Add Banner}
-  mmoMain.Lines.Add('Extracting Offline Ultibo RTL');
-  mmoMain.Lines.Add('');
+  LogOutput('Extracting Offline Ultibo RTL');
+  LogOutput('');
 
   {Browse for file}
   openMain.Title:='Extract Offline RTL';
@@ -1265,7 +1403,7 @@ begin
   {Extract File}
   if not ExtractFile(openMain.Filename) then
    begin
-    mmoMain.Lines.Add(' Error: Failed to extract offline RTL');
+    LogOutput(' Error: Failed to extract offline RTL');
     Exit;
    end;
 
@@ -1273,61 +1411,61 @@ begin
   if MessageDlg('The RTL has been extracted and installed, do you want to build it now?',mtConfirmation,[mbYes,mbNo],0) = mrYes then
    begin
     {Add Banner}
-    mmoMain.Lines.Add('Building Ultibo RTL');
-    mmoMain.Lines.Add('');
+    LogOutput('Building Ultibo RTL');
+    LogOutput('');
 
     {Add Path Prefix}
-    mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
-    mmoMain.Lines.Add('');
+    LogOutput(' Path Prefix is ' + PathPrefix);
+    LogOutput('');
     {Add Install Path}
-    mmoMain.Lines.Add(' Install Path is ' + InstallPath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Install Path is ' + InstallPath);
+    LogOutput('');
     {Add Compiler Name}
-    mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
-    mmoMain.Lines.Add('');
+    LogOutput(' Compiler Name is ' + CompilerName);
+    LogOutput('');
     {Add Compiler Path}
-    mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Compiler Path is ' + CompilerPath);
+    LogOutput('');
     {Add Source Path}
-    mmoMain.Lines.Add(' Source Path is ' + SourcePath);
-    mmoMain.Lines.Add('');
+    LogOutput(' Source Path is ' + SourcePath);
+    LogOutput('');
 
     {Add ARM Compiler}
     if Length(ARMCompiler) <> 0 then
      begin
-      mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
-      mmoMain.Lines.Add('');
+      LogOutput(' ARM Compiler is ' + ARMCompiler);
+      LogOutput('');
      end;
     {Add AARCH64 Compiler}
     if Length(AARCH64Compiler) <> 0 then
      begin
-      mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
-      mmoMain.Lines.Add('');
+      LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+      LogOutput('');
      end;
 
     {Create Build File}
-    mmoMain.Lines.Add(' Creating Build Script');
-    mmoMain.Lines.Add('');
+    LogOutput(' Creating Build Script');
+    LogOutput('');
     if not CreateBuildFile then
      begin
-      mmoMain.Lines.Add(' Error: Failed to create build script');
+      LogOutput(' Error: Failed to create build script');
       Exit;
      end;
 
     {Execute Build File}
-    mmoMain.Lines.Add(' Executing Build Script');
-    mmoMain.Lines.Add('');
+    LogOutput(' Executing Build Script');
+    LogOutput('');
     if not ExecuteBuildFile then
      begin
-      mmoMain.Lines.Add(' Error: Failed to execute build script');
+      LogOutput(' Error: Failed to execute build script');
       Exit;
      end;
    end;
 
   {Add Footer}
-  mmoMain.Lines.Add('');
-  mmoMain.Lines.Add('Extract Completed');
-  mmoMain.Lines.Add('');
+  LogOutput('');
+  LogOutput('Extract Completed');
+  LogOutput('');
  finally
   lblMain.Enabled:=True;
   lblPlatforms.Enabled:=True;
@@ -1336,6 +1474,7 @@ begin
   chkARMv8.Enabled:=True;
   cmdCheck.Enabled:=True;
   cmdDownload.Enabled:=True;
+  cmdFirmware.Enabled:=True;
   cmdOffline.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
@@ -1354,6 +1493,7 @@ begin
  chkARMv8.Enabled:=False;
  cmdCheck.Enabled:=False;
  cmdDownload.Enabled:=False;
+ cmdFirmware.Enabled:=False;
  cmdOffline.Enabled:=False;
  cmdBuild.Enabled:=False;
  cmdExit.Enabled:=False;
@@ -1363,60 +1503,60 @@ begin
   mmoMain.Lines.Clear;
 
   {Add Banner}
-  mmoMain.Lines.Add('Building Current Ultibo RTL');
-  mmoMain.Lines.Add('');
+  LogOutput('Building Current Ultibo RTL');
+  LogOutput('');
 
   {Add Path Prefix}
-  mmoMain.Lines.Add(' Path Prefix is ' + PathPrefix);
-  mmoMain.Lines.Add('');
+  LogOutput(' Path Prefix is ' + PathPrefix);
+  LogOutput('');
   {Add Install Path}
-  mmoMain.Lines.Add(' Install Path is ' + InstallPath);
-  mmoMain.Lines.Add('');
+  LogOutput(' Install Path is ' + InstallPath);
+  LogOutput('');
   {Add Compiler Name}
-  mmoMain.Lines.Add(' Compiler Name is ' + CompilerName);
-  mmoMain.Lines.Add('');
+  LogOutput(' Compiler Name is ' + CompilerName);
+  LogOutput('');
   {Add Compiler Path}
-  mmoMain.Lines.Add(' Compiler Path is ' + CompilerPath);
-  mmoMain.Lines.Add('');
+  LogOutput(' Compiler Path is ' + CompilerPath);
+  LogOutput('');
   {Add Source Path}
-  mmoMain.Lines.Add(' Source Path is ' + SourcePath);
-  mmoMain.Lines.Add('');
+  LogOutput(' Source Path is ' + SourcePath);
+  LogOutput('');
 
   {Add ARM Compiler}
   if Length(ARMCompiler) <> 0 then
    begin
-    mmoMain.Lines.Add(' ARM Compiler is ' + ARMCompiler);
-    mmoMain.Lines.Add('');
+    LogOutput(' ARM Compiler is ' + ARMCompiler);
+    LogOutput('');
    end;
   {Add AARCH64 Compiler}
   if Length(AARCH64Compiler) <> 0 then
    begin
-    mmoMain.Lines.Add(' AARCH64 Compiler is ' + AARCH64Compiler);
-    mmoMain.Lines.Add('');
+    LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+    LogOutput('');
    end;
 
   {Create Build File}
-  mmoMain.Lines.Add(' Creating Build Script');
-  mmoMain.Lines.Add('');
+  LogOutput(' Creating Build Script');
+  LogOutput('');
   if not CreateBuildFile then
    begin
-    mmoMain.Lines.Add(' Error: Failed to create build script');
+    LogOutput(' Error: Failed to create build script');
     Exit;
    end;
 
   {Execute Build File}
-  mmoMain.Lines.Add(' Executing Build Script');
-  mmoMain.Lines.Add('');
+  LogOutput(' Executing Build Script');
+  LogOutput('');
   if not ExecuteBuildFile then
    begin
-    mmoMain.Lines.Add(' Error: Failed to execute build script');
+    LogOutput(' Error: Failed to execute build script');
     Exit;
    end;
 
   {Add Footer}
-  mmoMain.Lines.Add('');
-  mmoMain.Lines.Add('Completed Build');
-  mmoMain.Lines.Add('');
+  LogOutput('');
+  LogOutput('Completed Build');
+  LogOutput('');
  finally
   lblMain.Enabled:=True;
   lblPlatforms.Enabled:=True;
@@ -1425,10 +1565,20 @@ begin
   chkARMv8.Enabled:=True;
   cmdCheck.Enabled:=True;
   cmdDownload.Enabled:=True;
+  cmdFirmware.Enabled:=True;
   cmdOffline.Enabled:=True;
   cmdBuild.Enabled:=True;
   cmdExit.Enabled:=True;
  end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.LogOutput(const AValue:String);
+begin
+ {}
+ mmoMain.Lines.Add(AValue);
+ mmoMain.SelStart:=Length(mmoMain.Text);
 end;
 
 {==============================================================================}
@@ -1492,6 +1642,8 @@ begin
      CompilerVersion:=IniFile.ReadString(Section,'CompilerVersion',CompilerVersion);
      {Get SourcePath}
      SourcePath:=IniFile.ReadString(Section,'SourcePath',SourcePath);
+     {Get FirmwarePath}
+     FirmwarePath:=IniFile.ReadString(Section,'FirmwarePath',FirmwarePath);
 
      {Get ARMCompiler}
      ARMCompiler:=IniFile.ReadString(Section,'ARMCompiler',ARMCompiler);
@@ -1514,6 +1666,11 @@ begin
      VersionURL:=IniFile.ReadString(Section,'VersionURL',VersionURL);
      {Get DownloadURL}
      DownloadURL:=IniFile.ReadString(Section,'DownloadURL',DownloadURL);
+
+     {Get FirmwareVersionURL}
+     FirmwareVersionURL:=IniFile.ReadString(Section,'FirmwareVersionURL',FirmwareVersionURL);
+     {Get FirmwareDownloadURL}
+     FirmwareDownloadURL:=IniFile.ReadString(Section,'FirmwareDownloadURL',FirmwareDownloadURL);
     finally
      IniFile.Free;
     end;
@@ -1544,25 +1701,25 @@ begin
   {Check Source Path}
   if not DirectoryExists(StripTrailingSlash(SourcePath)) then
    begin
-    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
-    mmoMain.Lines.Add('');
+    LogOutput(' Error: SourcePath "' + SourcePath + '" does not exist');
+    LogOutput('');
     Exit;
    end;
 
   {Get FileURL}
   FileURL:=VersionURL + VersionId;
-  mmoMain.Lines.Add('  Version File URL is ' + FileURL);
-  mmoMain.Lines.Add('');
+  LogOutput('  Version File URL is ' + FileURL);
+  LogOutput('');
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + VersionId;
-  mmoMain.Lines.Add('  Latest Version Filename is ' + Filename);
-  mmoMain.Lines.Add('');
+  LogOutput('  Latest Version Filename is ' + Filename);
+  LogOutput('');
 
   {Get Lastname}
   Lastname:=AddTrailingSlash(SourcePath) + VersionLast;
-  mmoMain.Lines.Add('  Current Version Filename is ' + Lastname);
-  mmoMain.Lines.Add('');
+  LogOutput('  Current Version Filename is ' + Lastname);
+  LogOutput('');
 
   {Set Defaults}
   FileVersion:='<Unknown>';
@@ -1583,8 +1740,8 @@ begin
    Client.AllowRedirect:=True;
 
    {Get Version File}
-   mmoMain.Lines.Add('  Downloading file: ' + VersionId);
-   mmoMain.Lines.Add('');
+   LogOutput('  Downloading file: ' + VersionId);
+   LogOutput('');
    Client.Get(FileURL,Filename);
 
    Lines:=TStringList.Create;
@@ -1593,15 +1750,15 @@ begin
     Lines.LoadFromFile(Filename);
     if Lines.Count = 0 then
      begin
-      mmoMain.Lines.Add(' Error: Latest version file contains no data');
-      mmoMain.Lines.Add('');
+      LogOutput(' Error: Latest version file contains no data');
+      LogOutput('');
       Exit;
      end;
 
     {Get File Version}
     FileVersion:=Lines.Strings[0];
-    mmoMain.Lines.Add('  Latest Version is ' + FileVersion);
-    mmoMain.Lines.Add('');
+    LogOutput('  Latest Version is ' + FileVersion);
+    LogOutput('');
 
     {Open Last Version File}
     if FileExists(Lastname) then
@@ -1610,16 +1767,16 @@ begin
       Lines.LoadFromFile(Lastname);
       if Lines.Count = 0 then
        begin
-        mmoMain.Lines.Add(' Error: Current version file contains no data');
-        mmoMain.Lines.Add('');
+        LogOutput(' Error: Current version file contains no data');
+        LogOutput('');
         Exit;
        end;
 
       {Get Last Version}
       LastVersion:=Lines.Strings[0];
      end;
-    mmoMain.Lines.Add('  Current Version is ' + LastVersion);
-    mmoMain.Lines.Add('');
+    LogOutput('  Current Version is ' + LastVersion);
+    LogOutput('');
 
     Result:=(LastVersion <> FileVersion);
    finally
@@ -1631,7 +1788,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception checking for RTL updates - Message: ' + E.Message);
+    LogOutput(' Error: Exception checking for RTL updates - Message: ' + E.Message);
    end;
  end;
 end;
@@ -1653,20 +1810,20 @@ begin
   {Check Source Path}
   if not DirectoryExists(StripTrailingSlash(SourcePath)) then
    begin
-    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
-    mmoMain.Lines.Add('');
+    LogOutput(' Error: SourcePath "' + SourcePath + '" does not exist');
+    LogOutput('');
     Exit;
    end;
 
   {Get FileURL}
   FileURL:=DownloadURL + DownloadZip;
-  mmoMain.Lines.Add('  Download File URL is ' + FileURL);
-  mmoMain.Lines.Add('');
+  LogOutput('  Download File URL is ' + FileURL);
+  LogOutput('');
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + DownloadZip;
-  mmoMain.Lines.Add('  Download Filename is ' + Filename);
-  mmoMain.Lines.Add('');
+  LogOutput('  Download Filename is ' + Filename);
+  LogOutput('');
 
   {Check File}
   if FileExists(Filename) then
@@ -1684,8 +1841,8 @@ begin
    Client.OnDataReceived:=DoDataReceived;
 
    {Get Zip File}
-   mmoMain.Lines.Add('  Downloading file: ' + DownloadZip);
-   mmoMain.Lines.Add('');
+   LogOutput('  Downloading file: ' + DownloadZip);
+   LogOutput('');
    Client.Get(FileURL,Filename);
 
    Result := True;
@@ -1695,7 +1852,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception downloading latest RTL - Message: ' + E.Message);
+    LogOutput(' Error: Exception downloading latest RTL - Message: ' + E.Message);
    end;
  end;
 end;
@@ -1719,8 +1876,8 @@ begin
   {Check Source Path}
   if not DirectoryExists(StripTrailingSlash(SourcePath)) then
    begin
-    mmoMain.Lines.Add(' Error: SourcePath "' + SourcePath + '" does not exist');
-    mmoMain.Lines.Add('');
+    LogOutput(' Error: SourcePath "' + SourcePath + '" does not exist');
+    LogOutput('');
     Exit;
    end;
 
@@ -1730,13 +1887,13 @@ begin
    begin
     Filename:=AddTrailingSlash(SourcePath) + Filename;
    end;
-  mmoMain.Lines.Add('  Filename is ' + Filename);
-  mmoMain.Lines.Add('');
+  LogOutput('  Filename is ' + Filename);
+  LogOutput('');
 
   {Get Pathname}
   Pathname:=StripTrailingSlash(SourcePath);
-  mmoMain.Lines.Add('  Pathname is ' + Pathname);
-  mmoMain.Lines.Add('');
+  LogOutput('  Pathname is ' + Pathname);
+  LogOutput('');
 
   {Get Tempname}
   Tempname:=AddTrailingSlash(SourcePath) + '__temp';
@@ -1761,8 +1918,8 @@ begin
    UnZipper.OutputPath:=Tempname;
 
    {Extract Zip File}
-   mmoMain.Lines.Add('  Extracting file: ' + AFilename);
-   mmoMain.Lines.Add('');
+   LogOutput('  Extracting file: ' + AFilename);
+   LogOutput('');
    UnZipper.Examine;
    UnZipper.UnZipAllFiles;
 
@@ -1797,7 +1954,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception extracting RTL - Message: ' + E.Message);
+    LogOutput(' Error: Exception extracting RTL - Message: ' + E.Message);
    end;
  end;
 end;
@@ -1832,8 +1989,8 @@ begin
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + BuildScript;
-  mmoMain.Lines.Add('  Build Script is ' + Filename);
-  mmoMain.Lines.Add('');
+  LogOutput('  Build Script is ' + Filename);
+  LogOutput('');
 
   {Check File}
   if FileExists(Filename) then
@@ -2688,7 +2845,7 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception creating RTL build script - Message: ' + E.Message);
+    LogOutput(' Error: Exception creating RTL build script - Message: ' + E.Message);
    end;
  end;
 end;
@@ -2715,8 +2872,8 @@ begin
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + BuildScript;
-  mmoMain.Lines.Add('  Build Script is ' + Filename);
-  mmoMain.Lines.Add('');
+  LogOutput('  Build Script is ' + Filename);
+  LogOutput('');
 
   {Check File}
   if not FileExists(Filename) then Exit;
@@ -2740,10 +2897,312 @@ begin
  except
   on E: Exception do
    begin
-    mmoMain.Lines.Add(' Error: Exception executing RTL build script - Message: ' + E.Message);
+    LogOutput(' Error: Exception executing RTL build script - Message: ' + E.Message);
    end;
  end;
 end;
+
+{==============================================================================}
+
+function TfrmMain.DownloadFirmware:Boolean;
+var
+ Count:Integer;
+ FileURL:String;
+ Filename:String;
+ Lastname:String;
+ Pathname:String;
+ Lines:TStringList;
+ FileVersion:String;
+ LastVersion:String;
+ Client:TFPHTTPClient;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(SourcePath) = 0 then Exit;
+  if Length(FirmwarePath) = 0 then Exit;
+  if Length(FirmwareVersionURL) = 0 then Exit;
+
+  {Check Source Path}
+  if not DirectoryExists(StripTrailingSlash(SourcePath)) then
+   begin
+    LogOutput(' Error: SourcePath "' + SourcePath + '" does not exist');
+    LogOutput('');
+    Exit;
+   end;
+
+  {Add Firmware Path}
+  LogOutput('  Firmware Path is ' + FirmwarePath);
+  LogOutput('');
+
+  {Check Firmware Path}
+  if not DirectoryExists(StripTrailingSlash(FirmwarePath)) then
+   begin
+    {Create Firmware Path}
+    ForceDirectories(StripTrailingSlash(FirmwarePath));
+
+    if not DirectoryExists(StripTrailingSlash(FirmwarePath)) then
+     begin
+      LogOutput(' Error: Could not create firmware path "' + FirmwarePath + '"');
+      LogOutput('');
+      Exit;
+     end;
+   end;
+
+  {Get FileURL}
+  FileURL:=FirmwareVersionURL + FirmwareId;
+  LogOutput('  Firmware File URL is ' + FileURL);
+  LogOutput('');
+
+  {Get Filename}
+  Filename:=AddTrailingSlash(SourcePath) + FirmwareId;
+  LogOutput('  Latest Firmware Filename is ' + Filename);
+  LogOutput('');
+
+  {Get Lastname}
+  Lastname:=AddTrailingSlash(SourcePath) + FirmwareLast;
+  LogOutput('  Current Firmware Filename is ' + Lastname);
+  LogOutput('');
+
+  {Set Defaults}
+  FileVersion:='<Unknown>';
+  LastVersion:='<Unknown>';
+
+  {Check File}
+  if FileExists(Filename) then
+   begin
+    {Delete File}
+    DeleteFile(Filename);
+
+    if FileExists(Filename) then Exit;
+   end;
+
+  {Create HTTP Client}
+  Client:=TFPHTTPClient.Create(nil);
+  try
+   Client.AllowRedirect:=True;
+
+   {Get Firmware File}
+   LogOutput('  Downloading file: ' + FirmwareId);
+   LogOutput('');
+   Client.Get(FileURL,Filename);
+
+   Lines:=TStringList.Create;
+   try
+    {Open Firmware File}
+    Lines.LoadFromFile(Filename);
+    if Lines.Count = 0 then
+     begin
+      LogOutput(' Error: Latest firmware file contains no data');
+      LogOutput('');
+      Exit;
+     end;
+
+    {Get File Version}
+    FileVersion:=Lines.Strings[0];
+    LogOutput('  Latest Firmware is ' + FileVersion);
+    LogOutput('');
+
+    {Open Last Firmware File}
+    if FileExists(Lastname) then
+     begin
+      Lines.Clear;
+      Lines.LoadFromFile(Lastname);
+      if Lines.Count = 0 then
+       begin
+        LogOutput(' Error: Current firmware file contains no data');
+        LogOutput('');
+        Exit;
+       end;
+
+      {Get Last Version}
+      LastVersion:=Lines.Strings[0];
+     end;
+    LogOutput('  Current Firmware is ' + LastVersion);
+    LogOutput('');
+
+    if LastVersion <> FileVersion then
+     begin
+      Client.OnDataReceived:=DoDataReceived;
+
+      {Get Raspberry Pi Firmware}
+      LogOutput('  Downloading Raspberry Pi A/B/A+/B+/Zero/ZeroW Firmware');
+      LogOutput('');
+
+      {Get Pathname}
+      Pathname:=AddTrailingSlash(FirmwarePath) + FirmwareDownloadFolderRPi;
+
+      {Check Pathname}
+      if not DirectoryExists(Pathname) then
+       begin
+        ForceDirectories(Pathname);
+
+        if not DirectoryExists(Pathname) then
+         begin
+          LogOutput(' Error: Could not create firmware path "' + Pathname + '"');
+          LogOutput('');
+          Exit;
+         end;
+       end;
+
+      for Count:=FirmwareDownloadFilesStartRPi to (FirmwareDownloadFilesStartRPi + FirmwareDownloadFilesCountRPi - 1) do
+       begin
+        {Get FileURL}
+        FileURL:=FirmwareDownloadURL + FileVersion + FirmwareDownloadFolder + FirmwareDownloadFiles[Count];
+
+        {Get Filename}
+        Filename:=AddTrailingSlash(Pathname) + FirmwareDownloadFiles[Count];
+
+        {Check and Delete File}
+        if FileExists(Filename) then DeleteFile(Filename);
+
+        {Get Firmware File}
+        LogOutput('  Downloading file: ' + FirmwareDownloadFiles[Count]);
+        Client.Get(FileURL,Filename);
+       end;
+      LogOutput('');
+
+      {Get Raspberry Pi2 Firmware}
+      LogOutput('  Downloading Raspberry Pi 2B Firmware');
+      LogOutput('');
+
+      {Get Pathname}
+      Pathname:=AddTrailingSlash(FirmwarePath) + FirmwareDownloadFolderRPi2;
+
+      {Check Pathname}
+      if not DirectoryExists(Pathname) then
+       begin
+        ForceDirectories(Pathname);
+
+        if not DirectoryExists(Pathname) then
+         begin
+          LogOutput(' Error: Could not create firmware path "' + Pathname + '"');
+          LogOutput('');
+          Exit;
+         end;
+       end;
+
+      for Count:=FirmwareDownloadFilesStartRPi to (FirmwareDownloadFilesStartRPi + FirmwareDownloadFilesCountRPi - 1) do
+       begin
+        {Get FileURL}
+        FileURL:=FirmwareDownloadURL + FileVersion + FirmwareDownloadFolder + FirmwareDownloadFiles[Count];
+
+        {Get Filename}
+        Filename:=AddTrailingSlash(Pathname) + FirmwareDownloadFiles[Count];
+
+        {Check and Delete File}
+        if FileExists(Filename) then DeleteFile(Filename);
+
+        {Get Firmware File}
+        LogOutput('  Downloading file: ' + FirmwareDownloadFiles[Count]);
+        Client.Get(FileURL,Filename);
+       end;
+      LogOutput('');
+
+      {Get Raspberry Pi3 Firmware}
+      LogOutput('  Downloading Raspberry Pi 3B/3B+/3A+ Firmware');
+      LogOutput('');
+      {Get Pathname}
+      Pathname:=AddTrailingSlash(FirmwarePath) + FirmwareDownloadFolderRPi3;
+
+      {Check Pathname}
+      if not DirectoryExists(Pathname) then
+       begin
+        ForceDirectories(Pathname);
+
+        if not DirectoryExists(Pathname) then
+         begin
+          LogOutput(' Error: Could not create firmware path "' + Pathname + '"');
+          LogOutput('');
+          Exit;
+         end;
+       end;
+
+      for Count:=FirmwareDownloadFilesStartRPi to (FirmwareDownloadFilesStartRPi + FirmwareDownloadFilesCountRPi - 1) do
+       begin
+        {Get FileURL}
+        FileURL:=FirmwareDownloadURL + FileVersion + FirmwareDownloadFolder + FirmwareDownloadFiles[Count];
+
+        {Get Filename}
+        Filename:=AddTrailingSlash(Pathname) + FirmwareDownloadFiles[Count];
+
+        {Check and Delete File}
+        if FileExists(Filename) then DeleteFile(Filename);
+
+        {Get Firmware File}
+        LogOutput('  Downloading file: ' + FirmwareDownloadFiles[Count]);
+        Client.Get(FileURL,Filename);
+       end;
+      LogOutput('');
+
+      {Get Raspberry Pi4 Firmware}
+      LogOutput('  Downloading Raspberry Pi 4B/400 Firmware');
+      LogOutput('');
+      {Get Pathname}
+      Pathname:=AddTrailingSlash(FirmwarePath) + FirmwareDownloadFolderRPi4;
+
+      {Check Pathname}
+      if not DirectoryExists(Pathname) then
+       begin
+        ForceDirectories(Pathname);
+
+        if not DirectoryExists(Pathname) then
+         begin
+          LogOutput(' Error: Could not create firmware path "' + Pathname + '"');
+          LogOutput('');
+          Exit;
+         end;
+       end;
+
+      for Count:=FirmwareDownloadFilesStartRPi4 to (FirmwareDownloadFilesStartRPi4 + FirmwareDownloadFilesCountRPi4 - 1) do
+       begin
+        {Get FileURL}
+        FileURL:=FirmwareDownloadURL + FileVersion + FirmwareDownloadFolder + FirmwareDownloadFiles[Count];
+
+        {Get Filename}
+        Filename:=AddTrailingSlash(Pathname) + FirmwareDownloadFiles[Count];
+
+        {Check and Delete File}
+        if FileExists(Filename) then DeleteFile(Filename);
+
+        {Get Firmware File}
+        LogOutput('  Downloading file: ' + FirmwareDownloadFiles[Count]);
+        Client.Get(FileURL,Filename);
+       end;
+      LogOutput('');
+
+      {Get Filename}
+      Filename:=AddTrailingSlash(SourcePath) + FirmwareId;
+
+      {Check Lastname}
+      if FileExists(Lastname) then
+       begin
+        DeleteFile(Lastname);
+
+        if FileExists(Lastname) then Exit;
+       end;
+
+      {Rename Firmware File}
+      Result:=RenameFile(Filename,Lastname);
+     end
+    else
+     begin
+      Result:=True;
+     end;
+   finally
+    Lines.Free;
+   end;
+  finally
+   Client.Free;
+  end;
+ except
+  on E: Exception do
+   begin
+    LogOutput(' Error: Exception downloading latest firmware - Message: ' + E.Message);
+   end;
+ end;
+end;
+
 
 {==============================================================================}
 {==============================================================================}

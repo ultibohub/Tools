@@ -48,6 +48,7 @@ RTL Builder
  CompilerPath=
  CompilerVersion=
  SourcePath=
+ FirmwarePath=
 
  ARMCompiler=
  AARCH64Compiler=
@@ -78,6 +79,9 @@ RTL Builder
 
  SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
                                                        (        Linux: <CompilerPath>/source)
+
+ FirmwarePath = The path where firmware files are located (Default Windows: <InstallPath>\firmware)
+                                                          (        Linux: <InstallPath>/firmware)
 
  ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
 
