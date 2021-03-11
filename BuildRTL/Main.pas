@@ -849,8 +849,8 @@ begin
  CompilerPath:=InstallPath + '\fpc\' + CompilerVersion;
  {$ENDIF}
  {$IFDEF LINUX}
- {Assume that the compiler path will be /fpc/bin under the InstallPath}
- CompilerPath:=InstallPath + '/fpc/bin';
+ {Assume that the compiler path will be /fpc under the InstallPath}
+ CompilerPath:=InstallPath + '/fpc';
  {$ENDIF}
 
  {$IFDEF WINDOWS}
@@ -917,6 +917,9 @@ begin
  chkARMv6.Checked:=PlatformARMv6;
  chkARMv7.Checked:=PlatformARMv7;
  chkARMv8.Checked:=PlatformARMv8;
+ lblMain.Caption:='To make sure you have the latest version of the Ultibo RTL click Check for Updates, if a new version is found you can choose to proceed with downloading and rebuilding the updated RTL.' + LineEnd + LineEnd
+                + 'You can also select from other options to force a download of the latest RTL version, extract a previously downloaded copy or simply rebuild the current code if you have made changes.' + LineEnd + LineEnd
+                + 'The progress of downloading, extracting or building the RTL or any errors encountered will be shown below.';
 
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then

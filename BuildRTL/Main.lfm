@@ -18,8 +18,8 @@ object frmMain: TfrmMain
   LCLVersion = '2.0.2.0'
   object mmoMain: TMemo
     Left = 0
-    Height = 412
-    Top = 233
+    Height = 380
+    Top = 265
     Width = 923
     Align = alClient
     Color = clBtnFace
@@ -37,12 +37,12 @@ object frmMain: TfrmMain
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 233
+    Height = 265
     Top = 0
     Width = 923
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 233
+    ClientHeight = 265
     ClientWidth = 923
     ParentShowHint = False
     ShowHint = True
@@ -50,7 +50,7 @@ object frmMain: TfrmMain
     object lblCompiler: TLabel
       Left = 18
       Height = 13
-      Top = 200
+      Top = 232
       Width = 75
       Anchors = [akLeft, akBottom]
       Caption = 'Compiler Output'
@@ -59,19 +59,19 @@ object frmMain: TfrmMain
     object lblPlatforms: TLabel
       Left = 18
       Height = 13
-      Top = 92
+      Top = 127
       Width = 76
       Caption = 'Select Platforms'
       ParentColor = False
     end
     object lblMain: TLabel
       Left = 18
-      Height = 63
+      Height = 101
       Top = 18
       Width = 697
       Anchors = [akTop, akLeft, akRight]
       AutoSize = False
-      Caption = 'This tool allows rebuilding of the Ultibo RTL if you have made changes to the source code or downloaded an updated RTL. Select the platforms below to rebuild and then click Build. The progress of the RTL build or any errors will be shown below.'
+      Caption = 'To make sure you have the latest version of the Ultibo RTL click the Check for Updates button, if a new version is found you can choose to proceed with downloading and rebuilding the updated RTL. The progress of downloading, extracting or building the RTL or any errors encountered will be shown below.'
       ParentColor = False
       WordWrap = True
     end
@@ -100,7 +100,7 @@ object frmMain: TfrmMain
     object chkARMv6: TCheckBox
       Left = 26
       Height = 19
-      Top = 116
+      Top = 151
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero/ZeroW)'
@@ -110,7 +110,7 @@ object frmMain: TfrmMain
     object chkARMv7: TCheckBox
       Left = 26
       Height = 19
-      Top = 140
+      Top = 175
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
@@ -120,7 +120,7 @@ object frmMain: TfrmMain
     object chkARMv8: TCheckBox
       Left = 26
       Height = 19
-      Top = 164
+      Top = 199
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
@@ -130,7 +130,7 @@ object frmMain: TfrmMain
     object progressMain: TProgressBar
       Left = 4
       Height = 10
-      Top = 222
+      Top = 254
       Width = 915
       Anchors = [akLeft, akRight, akBottom]
       TabOrder = 9
