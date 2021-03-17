@@ -414,6 +414,9 @@ if [ "$LAZARUS" = "Y" ]; then
 fi
 rm -rf $BASE/examples/Synapse
 
+# Save the version id file
+cp $BASE/fpc/source/__version.id $BASE/fpc/source/__version.last
+
 # Download the firmware id file
 FIRMWARE_ID=https://raw.githubusercontent.com/ultibohub/Core/master/source/__firmware.id
 download "$BASE/fpc/source/__firmware.id" $FIRMWARE_ID
