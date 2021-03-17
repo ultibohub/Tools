@@ -169,8 +169,9 @@ const
  DefaultFirmwareDownloadURL = 'https://github.com/raspberrypi/firmware/raw/';
 
  FirmwareDownloadFolder = '/boot/';
- FirmwareDownloadFiles:array[0..16] of String = (
+ FirmwareDownloadFiles:array[0..18] of String = (
   {RPi/RPi2/RPi3 firmware files}
+  'LICENCE.broadcom',
   'bootcode.bin',
   'fixup.dat',
   'fixup_cd.dat',
@@ -181,6 +182,7 @@ const
   'start_db.elf',
   'start_x.elf',
   {RPi4 firmware files}
+  'LICENCE.broadcom',
   'fixup4.dat',
   'fixup4cd.dat',
   'fixup4db.dat',
@@ -196,9 +198,9 @@ const
  FirmwareDownloadFolderRPi4 = 'RPi4';
 
  FirmwareDownloadFilesStartRPi = 0;
- FirmwareDownloadFilesCountRPi = 9;
- FirmwareDownloadFilesStartRPi4 = 9;
- FirmwareDownloadFilesCountRPi4 = 8;
+ FirmwareDownloadFilesCountRPi = 10;
+ FirmwareDownloadFilesStartRPi4 = 10;
+ FirmwareDownloadFilesCountRPi4 = 9;
 
 type
 
