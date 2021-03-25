@@ -407,6 +407,10 @@ fi
 mv downloads/FPC-master $BASE/fpc
 mv downloads/Core-master/source/rtl/ultibo $BASE/fpc/source/rtl/ultibo
 mv downloads/Core-master/source/packages/ultibounits $BASE/fpc/source/packages/ultibounits
+mv downloads/Core-master/source/__version.id $BASE/fpc/source/__version.id
+mv downloads/Core-master/source/__firmware.id $BASE/fpc/source/__firmware.id
+mv downloads/Core-master/source/__buildrtl.bat $BASE/fpc/source/__buildrtl.bat
+mv downloads/Core-master/source/__buildrtl.sh $BASE/fpc/source/__buildrtl.sh
 mv downloads/Core-master/units $BASE/fpc/units
 mv downloads/Examples-master $BASE/examples
 if [ "$LAZARUS" = "Y" ]; then
