@@ -103,6 +103,8 @@ RTL Builder
 
  PlatformARMv8 - Build the RTL and Packages for ARMv8 architecture (0=Disable / 1=Enable) (Default: 1)
 
+ 
+ Please note that compiling BuildRTL requires Lazarus 2.0.10 (with FPC 3.2.0) or above.
 }
 
 program BuildRTL;
