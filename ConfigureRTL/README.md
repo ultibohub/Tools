@@ -1,4 +1,4 @@
-Ultibo Configure RTL tool
+## Ultibo Configure RTL tool
 
 The Configure RTL tool is used by the Ultibo core installer to update the configuration
 files used by FPC to determine unit locations etc and the environment options file for
@@ -17,7 +17,9 @@ RPI2.CFG
 
 RPI3.CFG
 
+RPI4.CFG
+
 environmentoptions.xml
 
 
-Compiled with Delphi (Convertible to FPC/Lazarus)
+Compiled with FPC/Lazarus for Windows target

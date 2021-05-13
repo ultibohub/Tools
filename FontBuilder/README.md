@@ -1,4 +1,4 @@
-Ultibo Font Builder tool
+## Ultibo Font Builder tool
 
 This is the source for the Ultibo Font Builder which converts common bitmap font formats into a pascal unit for use in Ultibo projects.
 
@@ -17,4 +17,4 @@ For fonts where the bits per row is greater than one byte both little endian and
 This tool currently supports converting PC Screen Fonts (PSF) into a pascal unit suitable for including in an Ultibo project. Additional formats will be supported in future.
 
 
-Compiled with Delphi (Convertible to FPC/Lazarus)
+Compiled with FPC/Lazarus for Windows or Linux targets

@@ -1,4 +1,4 @@
-Ultibo QEMU Launcher tool
+## Ultibo QEMU Launcher tool
 
 This is the source for the Ultibo QEMU Launcher which is used when you select "Run in QEMU ..." from the Tools menu in Lazarus.
 
@@ -8,7 +8,7 @@ Note that while QEMU supports a range of emulations the Ultibo run time current 
 
 While the tool is designed to determine the required information without configuration it does support creating a QEMULauncher.ini file in the same directory and setting a number of parameters to adjust the behavior.
 
-See the header of the QEMULauncher.dpr project file for details of the INI file format and available parameters.
+See the header of the QEMULauncher.lpr project file for details of the INI file format and available parameters.
 
 
-Compiled with Delphi (Convertible to FPC/Lazarus)
+Compiled with FPC/Lazarus for Windows or Linux targets
