@@ -435,7 +435,7 @@ FIRMWARE_URL=https://github.com/raspberrypi/firmware/raw/$FIRMWARE_ID/boot
 mkdir -p $BASE/firmware/RPi
 mkdir -p $BASE/firmware/RPi2
 mkdir -p $BASE/firmware/RPi3
-# mkdir -p $BASE/firmware/RPi4
+mkdir -p $BASE/firmware/RPi4
 
 # Download RPi firmware
 echo "Downloading Raspberry Pi firmware $FIRMWARE_ID"
@@ -458,16 +458,24 @@ echo " Pi 3B/3B+/3A+"
 cp $BASE/firmware/RPi/* $BASE/firmware/RPi3
 
 # Download RPi4 firmware
-# echo " Pi 4B/400"
-# download "$BASE/firmware/RPi4/LICENCE.broadcom" $FIRMWARE_URL/LICENCE.broadcom
-# download "$BASE/firmware/RPi4/fixup4.dat" $FIRMWARE_URL/fixup4.dat
-# download "$BASE/firmware/RPi4/fixup4cd.dat" $FIRMWARE_URL/fixup4cd.dat
-# download "$BASE/firmware/RPi4/fixup4db.dat" $FIRMWARE_URL/fixup4db.dat
-# download "$BASE/firmware/RPi4/fixup4x.dat" $FIRMWARE_URL/fixup4x.dat
-# download "$BASE/firmware/RPi4/start4.elf" $FIRMWARE_URL/start4.elf
-# download "$BASE/firmware/RPi4/start4cd.elf" $FIRMWARE_URL/start4cd.elf
-# download "$BASE/firmware/RPi4/start4db.elf" $FIRMWARE_URL/start4db.elf
-# download "$BASE/firmware/RPi4/start4x.elf" $FIRMWARE_URL/start4x.elf
+echo " Pi 4B/400"
+download "$BASE/firmware/RPi4/LICENCE.broadcom" $FIRMWARE_URL/LICENCE.broadcom
+download "$BASE/firmware/RPi4/fixup4.dat" $FIRMWARE_URL/fixup4.dat
+download "$BASE/firmware/RPi4/fixup4cd.dat" $FIRMWARE_URL/fixup4cd.dat
+download "$BASE/firmware/RPi4/fixup4db.dat" $FIRMWARE_URL/fixup4db.dat
+download "$BASE/firmware/RPi4/fixup4x.dat" $FIRMWARE_URL/fixup4x.dat
+download "$BASE/firmware/RPi4/start4.elf" $FIRMWARE_URL/start4.elf
+download "$BASE/firmware/RPi4/start4cd.elf" $FIRMWARE_URL/start4cd.elf
+download "$BASE/firmware/RPi4/start4db.elf" $FIRMWARE_URL/start4db.elf
+download "$BASE/firmware/RPi4/start4x.elf" $FIRMWARE_URL/start4x.elf
+
+# Copy the ARM boot stubs to the firmware folders
+cp $BASE/fpc/source/rtl/ultibo/boot/armstub32-rpi2.bin $BASE/firmware/RPi2
+cp $BASE/fpc/source/rtl/ultibo/boot/config.txt $BASE/firmware/RPi2
+cp $BASE/fpc/source/rtl/ultibo/boot/armstub32-rpi3.bin $BASE/firmware/RPi3
+cp $BASE/fpc/source/rtl/ultibo/boot/config.txt $BASE/firmware/RPi3
+cp $BASE/fpc/source/rtl/ultibo/boot/armstub32-rpi4.bin $BASE/firmware/RPi4
+cp $BASE/fpc/source/rtl/ultibo/boot/config.txt $BASE/firmware/RPi4
 
 # Save the firmware id file
 cp $BASE/fpc/source/__firmware.id $BASE/fpc/source/__firmware.last
@@ -603,20 +611,20 @@ echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 
 # RPI4.CFG
-# CONFIGFILE="$BASE/fpc/bin/RPI4.CFG"
-# echo "#" > $CONFIGFILE
-# echo "# Raspberry Pi 4B specific config file" >> $CONFIGFILE
-# echo "#" >> $CONFIGFILE
-# echo "-CfVFPV3" >> $CONFIGFILE
-# echo "-CIARM" >> $CONFIGFILE
-# echo "-CaEABIHF" >> $CONFIGFILE
-# echo "-OoFASTMATH" >> $CONFIGFILE
-# echo "-dRPI4" >> $CONFIGFILE
-# echo "-XParm-none-eabi-" >> $CONFIGFILE
-# echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
-# echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
-# echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
-# echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+CONFIGFILE="$BASE/fpc/bin/RPI4.CFG"
+echo "#" > $CONFIGFILE
+echo "# Raspberry Pi 4B specific config file" >> $CONFIGFILE
+echo "#" >> $CONFIGFILE
+echo "-CfVFPV3" >> $CONFIGFILE
+echo "-CIARM" >> $CONFIGFILE
+echo "-CaEABIHF" >> $CONFIGFILE
+echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI4" >> $CONFIGFILE
+echo "-XParm-none-eabi-" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 
 # QEMUVPB.CFG
 CONFIGFILE="$BASE/fpc/bin/QEMUVPB.CFG"
@@ -753,10 +761,10 @@ if [ "$EXAMPLES" = "Y" ]; then
     cd $BASE/examples/01-HelloWorld/RPi3
     $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI3B @$BASE/fpc/bin/RPI3.CFG -O2 HelloWorld.lpr
 
-#     echo
-#     echo "Building Hello World for RPi4"
-#     cd $BASE/examples/01-HelloWorld/RPi4
-#     $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI4B @$BASE/fpc/bin/RPI4.CFG -O2 HelloWorld.lpr
+    echo
+    echo "Building Hello World for RPi4"
+    cd $BASE/examples/01-HelloWorld/RPi4
+    $BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI4B @$BASE/fpc/bin/RPI4.CFG -O2 HelloWorld.lpr
     
     echo
     echo "Building Hello World for QEMU"
