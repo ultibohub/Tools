@@ -319,6 +319,7 @@ cd $BASE
 
 # Determine operating system architecture
 CPU=$(uname -m)
+FPC_OVERRIDE=""
 
 if [ "$CPU" = "i686" ]; then
 	CPU="i386"
@@ -330,6 +331,10 @@ fi
 
 if [ "$CPU" = "x86_64" ]; then
     COMPILER="ppcx64"
+
+    # Temporarily use 3.1.1 as the starting compiler
+    FPC_STABLE=3.1.1
+    FPC_OVERRIDE="OVERRIDEVERSIONCHECK=1"
 fi
 
 if [ "$CPU" = "armv6l" ]; then
@@ -485,7 +490,7 @@ cd $BASE/fpc/source
 if [ "$CPU" != "arm" ]; then
     make distclean
     exitFailure
-    make all OS_TARGET=linux CPU_TARGET=$CPU
+    make all OS_TARGET=linux CPU_TARGET=$CPU $FPC_OVERRIDE
     exitFailure
     make install OS_TARGET=linux CPU_TARGET=$CPU INSTALL_PREFIX=$BASE/fpc
     exitFailure
