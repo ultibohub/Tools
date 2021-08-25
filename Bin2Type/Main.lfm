@@ -1,11 +1,11 @@
 object frmMain: TfrmMain
   Left = 606
-  Height = 261
+  Height = 288
   Top = 260
   Width = 422
   BorderStyle = bsDialog
   Caption = 'Binary File to Type Definition'
-  ClientHeight = 261
+  ClientHeight = 288
   ClientWidth = 422
   Color = clBtnFace
   Font.Color = clWindowText
@@ -37,7 +37,7 @@ object frmMain: TfrmMain
   object lblOffset: TLabel
     Left = 16
     Height = 13
-    Top = 144
+    Top = 163
     Width = 67
     Caption = 'Starting Offset'
     ParentColor = False
@@ -45,7 +45,7 @@ object frmMain: TfrmMain
   object lblSize: TLabel
     Left = 16
     Height = 13
-    Top = 180
+    Top = 199
     Width = 89
     Caption = 'Conversion Length'
     ParentColor = False
@@ -53,7 +53,7 @@ object frmMain: TfrmMain
   object lblSize2: TLabel
     Left = 218
     Height = 13
-    Top = 180
+    Top = 199
     Width = 75
     Caption = '(0 = Convert All)'
     ParentColor = False
@@ -61,7 +61,7 @@ object frmMain: TfrmMain
   object lblName: TLabel
     Left = 16
     Height = 13
-    Top = 108
+    Top = 127
     Width = 55
     Caption = 'Type Name'
     ParentColor = False
@@ -69,7 +69,7 @@ object frmMain: TfrmMain
   object cmdConvert: TButton
     Left = 244
     Height = 25
-    Top = 218
+    Top = 245
     Width = 75
     Anchors = [akRight, akBottom]
     Caption = 'Convert'
@@ -79,7 +79,7 @@ object frmMain: TfrmMain
   object cmdExit: TButton
     Left = 328
     Height = 25
-    Top = 218
+    Top = 245
     Width = 75
     Anchors = [akRight, akBottom]
     Caption = 'Exit'
@@ -107,7 +107,7 @@ object frmMain: TfrmMain
   object txtOffset: TEdit
     Left = 120
     Height = 21
-    Top = 140
+    Top = 159
     Width = 85
     OnChange = txtOffsetChange
     TabOrder = 5
@@ -115,7 +115,7 @@ object frmMain: TfrmMain
   object txtSize: TEdit
     Left = 120
     Height = 21
-    Top = 176
+    Top = 195
     Width = 85
     OnChange = txtSizeChange
     TabOrder = 6
@@ -143,11 +143,20 @@ object frmMain: TfrmMain
   object txtName: TEdit
     Left = 120
     Height = 21
-    Top = 104
+    Top = 123
     Width = 283
     Anchors = [akTop, akLeft, akRight]
     OnChange = txtNameChange
     TabOrder = 4
+  end
+  object chkStandalone: TCheckBox
+    Left = 120
+    Height = 19
+    Top = 93
+    Width = 126
+    Caption = 'Create standalone unit'
+    OnClick = chkStandaloneClick
+    TabOrder = 9
   end
   object openMain: TOpenDialog
     left = 8

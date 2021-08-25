@@ -1,10 +1,10 @@
 object frmMain: TfrmMain
-  Left = 514
-  Height = 668
-  Top = 202
+  Left = 416
+  Height = 707
+  Top = 168
   Width = 923
   Caption = 'Ultibo RTL Builder'
-  ClientHeight = 668
+  ClientHeight = 707
   ClientWidth = 923
   Color = clBtnFace
   Font.Color = clWindowText
@@ -18,8 +18,8 @@ object frmMain: TfrmMain
   LCLVersion = '2.0.2.0'
   object mmoMain: TMemo
     Left = 0
-    Height = 380
-    Top = 265
+    Height = 382
+    Top = 302
     Width = 923
     Align = alClient
     Color = clBtnFace
@@ -30,19 +30,19 @@ object frmMain: TfrmMain
   object sbMain: TStatusBar
     Left = 0
     Height = 23
-    Top = 645
+    Top = 684
     Width = 923
     Panels = <>
     SimplePanel = False
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 265
+    Height = 302
     Top = 0
     Width = 923
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 265
+    ClientHeight = 302
     ClientWidth = 923
     ParentShowHint = False
     ShowHint = True
@@ -50,7 +50,7 @@ object frmMain: TfrmMain
     object lblCompiler: TLabel
       Left = 18
       Height = 13
-      Top = 232
+      Top = 270
       Width = 75
       Anchors = [akLeft, akBottom]
       Caption = 'Compiler Output'
@@ -100,17 +100,17 @@ object frmMain: TfrmMain
     object chkARMv6: TCheckBox
       Left = 26
       Height = 19
-      Top = 151
+      Top = 147
       Width = 716
       Anchors = [akTop, akLeft, akRight]
-      Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero/ZeroW)'
+      Caption = 'ARMv6 (Raspberry Pi A/B/A+/B+/Zero/ZeroW, QEMU)'
       OnClick = chkARMv6Click
       TabOrder = 6
     end
     object chkARMv7: TCheckBox
       Left = 26
       Height = 19
-      Top = 175
+      Top = 168
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
@@ -120,7 +120,7 @@ object frmMain: TfrmMain
     object chkARMv8: TCheckBox
       Left = 26
       Height = 19
-      Top = 199
+      Top = 189
       Width = 716
       Anchors = [akTop, akLeft, akRight]
       Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
@@ -130,7 +130,7 @@ object frmMain: TfrmMain
     object progressMain: TProgressBar
       Left = 4
       Height = 10
-      Top = 254
+      Top = 291
       Width = 915
       Anchors = [akLeft, akRight, akBottom]
       TabOrder = 9
@@ -178,6 +178,50 @@ object frmMain: TfrmMain
       Caption = 'Download Firmware'
       OnClick = cmdFirmwareClick
       TabOrder = 2
+    end
+    object lblBranch: TLabel
+      Left = 18
+      Height = 13
+      Top = 220
+      Width = 67
+      Caption = 'Select Branch'
+      ParentColor = False
+    end
+    object cmbBranch: TComboBox
+      Left = 26
+      Height = 21
+      Top = 240
+      Width = 164
+      ItemHeight = 13
+      OnChange = cmbBranchChange
+      Style = csDropDownList
+      TabOrder = 10
+    end
+    object chkSaveSettings: TCheckBox
+      Left = 800
+      Height = 19
+      Top = 219
+      Width = 86
+      Anchors = [akTop, akRight]
+      Caption = 'Save Settings'
+      OnClick = chkSaveSettingsClick
+      TabOrder = 11
+    end
+    object edtCustomBranch: TEdit
+      Left = 246
+      Height = 21
+      Top = 240
+      Width = 152
+      OnChange = edtCustomBranchChange
+      TabOrder = 12
+    end
+    object lblCustomBranch: TLabel
+      Left = 205
+      Height = 13
+      Top = 244
+      Width = 28
+      Caption = 'Name'
+      ParentColor = False
     end
   end
   object openMain: TOpenDialog

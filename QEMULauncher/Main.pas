@@ -106,6 +106,7 @@ type
    function GetKernel:String;
    function GetMemory:String;
    function GetMachine:String;
+   function GetDevices:String;
   public
    {QEMU Variables}
    Path:String;
@@ -174,7 +175,7 @@ const
   'ARMV8');
 
  {From FPCControllerNames in definetemplates.pas}
- ControllerNames:array[0..8] of String = (
+ ControllerNames:array[0..13] of String = (
   'RPIA',
   'RPIB',
   'RPIZERO',
@@ -183,7 +184,13 @@ const
   'RPI3B',
   'RPI4B',
   'RPI400',
-  'QEMUVPB');
+  'QEMUVPB',
+  'QEMURPIA',
+  'QEMURPIZERO',
+  'QEMURPI2B',
+  'QEMURPI3A',
+  'QEMURPI3B'
+  );
 
 {$IFDEF WINDOWS}
 type
@@ -771,11 +778,57 @@ begin
   begin
    if Uppercase(Processor) = 'ARMV6' then
     begin
-     //Result:='arm1176'; //Not yet supported
+     if Uppercase(Controller) = 'RPIA' then
+      begin
+       //Result:='arm1176'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'RPIB' then
+      begin
+       //Result:='arm1176'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'RPIZERO' then
+      begin
+       //Result:='arm1176'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'QEMURPIA' then
+      begin
+       Result:='arm1176';
+      end
+     else if Uppercase(Controller) = 'QEMURPIZERO' then
+      begin
+       Result:='arm1176';
+      end;
     end
    else if Uppercase(Processor) = 'ARMV7A' then
     begin
-     Result:='cortex-a8';
+     if Uppercase(Controller) = 'RPI2B' then
+      begin
+       //Result:='cortex-a7'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'RPI3A' then
+      begin
+       //Result:='cortex-a7'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'RPI3B' then
+      begin
+       //Result:='cortex-a7'; //Not yet supported
+      end
+     else if Uppercase(Controller) = 'QEMUVPB' then
+      begin
+       Result:='cortex-a8';
+      end
+     else if Uppercase(Controller) = 'QEMURPI2B' then
+      begin
+       Result:='cortex-a7';
+      end
+     else if Uppercase(Controller) = 'QEMURPI3A' then
+      begin
+       Result:='cortex-a7';
+      end
+     else if Uppercase(Controller) = 'QEMURPI3B' then
+      begin
+       Result:='cortex-a7';
+      end;
     end;
   end
  else if Uppercase(CPU) = 'AARCH64' then
@@ -831,17 +884,37 @@ begin
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='kernel.bin';
+    end
+   else if Uppercase(Controller) = 'QEMURPIA' then
+    begin
+     Result:='kernel.qimg';
+    end
+   else if Uppercase(Controller) = 'QEMURPIZERO' then
+    begin
+     Result:='kernel.qimg';
+    end
+   else if Uppercase(Controller) = 'QEMURPI2B' then
+    begin
+     Result:='kernel7.qimg';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='kernel7.qimg';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='kernel7.qimg';
     end;
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
    if Uppercase(Controller) = 'RPI3A' then
     begin
-     //Result:='kernel8.img'; //Not yet supported
+     Result:='kernel8.img';
     end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
-     //Result:='kernel8.img'; //Not yet supported
+     Result:='kernel8.img';
     end
    else if Uppercase(Controller) = 'RPI4B' then
     begin
@@ -854,6 +927,14 @@ begin
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='kernel64.bin';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='kernel8.img';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='kernel8.img';
     end;
   end;
 end;
@@ -877,54 +958,82 @@ begin
     end
    else if Uppercase(Controller) = 'RPIZERO' then
     begin
-     //Result:='1024M'; //Not yet supported
+     //Result:='512M'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI2B' then
     begin
-     //Result:='1024M'; //Not yet supported
+     //Result:='1G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI3A' then
     begin
-     //Result:='1024M'; //Not yet supported
+     //Result:='512M'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
-     //Result:='1024M'; //Not yet supported
+     //Result:='1G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI4B' then
     begin
-     //Result:='4096M'; //Not yet supported
+     //Result:='4G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI400' then
     begin
-     //Result:='4096M'; //Not yet supported
+     //Result:='4G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='256M';
+    end
+   else if Uppercase(Controller) = 'QEMURPIA' then
+    begin
+     Result:='512M';
+    end
+   else if Uppercase(Controller) = 'QEMURPIZERO' then
+    begin
+     Result:='512M';
+    end
+   else if Uppercase(Controller) = 'QEMURPI2B' then
+    begin
+     Result:='1G';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='1G'; //'512M'; //Using raspi2b in 32-bit mode
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='1G';
     end;
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
    if Uppercase(Controller) = 'RPI3A' then
     begin
-     //Result:='1024M'; //Not yet supported
+     Result:='512M';
     end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
-     //Result:='1024M'; //Not yet supported
+     Result:='1G';
     end
    else if Uppercase(Controller) = 'RPI4B' then
     begin
-     //Result:='4096M'; //Not yet supported
+     //Result:='4G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI400' then
     begin
-     //Result:='4096M'; //Not yet supported
+     //Result:='4G'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='256M';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='512M';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='1G';
     end;
   end;
 end;
@@ -973,29 +1082,156 @@ begin
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='versatilepb';
+    end
+   else if Uppercase(Controller) = 'QEMURPIA' then
+    begin
+     Result:='raspi1ap';
+    end
+   else if Uppercase(Controller) = 'QEMURPIZERO' then
+    begin
+     Result:='raspi0';
+    end
+   else if Uppercase(Controller) = 'QEMURPI2B' then
+    begin
+     Result:='raspi2b';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='raspi2b'; //raspi3ap only supported by QEMU Aarch64
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='raspi2b'; //raspi3b only supported by QEMU Aarch64
     end;
   end
  else if Uppercase(CPU) = 'AARCH64' then
   begin
    if Uppercase(Controller) = 'RPI3A' then
     begin
-     //Result:='raspi2'; //Not yet supported
+     Result:='raspi3ap';
     end
    else if Uppercase(Controller) = 'RPI3B' then
     begin
-     //Result:='raspi2'; //Not yet supported
+     Result:='raspi3b';
     end
    else if Uppercase(Controller) = 'RPI4B' then
     begin
-     //Result:='raspi2'; //Not yet supported
+     //Result:='raspi4'; //Not yet supported
     end
    else if Uppercase(Controller) = 'RPI400' then
     begin
-     //Result:='raspi2'; //Not yet supported
+     //Result:='raspi4'; //Not yet supported
     end
    else if Uppercase(Controller) = 'QEMUVPB' then
     begin
      Result:='versatilepb';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='raspi3ap';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='raspi3b';
+    end;
+  end;
+end;
+
+{==============================================================================}
+
+function TQEMULaunch.GetDevices:String;
+begin
+ {}
+ Result:='';
+
+ if Uppercase(CPU) = 'ARM' then
+  begin
+   if Uppercase(Controller) = 'RPIA' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPIB' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPIZERO' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI2B' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI3A' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'QEMUVPB' then
+    begin
+     Result:=''; //Nothing
+    end
+   else if Uppercase(Controller) = 'QEMURPIA' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'QEMURPIZERO' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'QEMURPI2B' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end;
+  end
+ else if Uppercase(CPU) = 'AARCH64' then
+  begin
+   if Uppercase(Controller) = 'RPI3A' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'RPI3B' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'RPI4B' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'RPI400' then
+    begin
+     //Result:='-device usb-kbd -device usb-mouse'; //Not yet supported
+    end
+   else if Uppercase(Controller) = 'QEMUVPB' then
+    begin
+     Result:=''; //Nothing
+    end
+   else if Uppercase(Controller) = 'QEMURPI3A' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
+    end
+   else if Uppercase(Controller) = 'QEMURPI3B' then
+    begin
+     Result:='-device usb-kbd -device usb-mouse';
     end;
   end;
 end;
@@ -1095,11 +1331,25 @@ begin
       {Add USB}
       Command:=Command + ' -usb';
 
-      {Add Append}
-      Command:=Command + ' -append ' + AddQuotes(CommandLine);
+      {Get Devices}
+      Param:=GetDevices;
+      if Length(Param) > 0 then
+       begin
+        {Add Devices}
+        Command:=Command + ' ' + Param;
+       end;
 
-      {Add Extras}
-      Command:=Command + ' ' + ExtraParams;
+      if Length(CommandLine) > 0 then
+       begin
+        {Add Append}
+        Command:=Command + ' -append ' + AddQuotes(CommandLine);
+       end;
+
+      if Length(ExtraParams) > 0 then
+       begin
+        {Add Extras}
+        Command:=Command + ' ' + ExtraParams;
+       end;
 
       {Start Program}
       {$IFDEF WINDOWS}
@@ -1273,19 +1523,19 @@ var
 begin
  {}
  cmbCPU.Clear;
- for Count:=0 to 1 do
+ for Count:=Low(CPUNames) to High(CPUNames) do
   begin
    cmbCPU.Items.Add(CPUNames[Count]);
   end;
 
  cmbProcessor.Clear;
- for Count:=0 to 2 do
+ for Count:=Low(ProcessorNames) to High(ProcessorNames) do
   begin
    cmbProcessor.Items.Add(ProcessorNames[Count]);
   end;
 
  cmbController.Clear;
- for Count:=0 to 8 do
+ for Count:=Low(ControllerNames) to High(ControllerNames) do
   begin
    cmbController.Items.Add(ControllerNames[Count]);
   end;

@@ -59,6 +59,7 @@ RTL Builder
  CompilerVersion=
  SourcePath=
  FirmwarePath=
+ BranchName=
 
  ARMCompiler=
  AARCH64Compiler=
@@ -90,8 +91,11 @@ RTL Builder
  SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
                                                        (        Linux: <CompilerPath>/source)
 
- FirmwarePath = The path where firmware files are located (Default Windows: <InstallPath>\firmware)
+ FirmwarePath - The path where firmware files are located (Default Windows: <InstallPath>\firmware)
                                                           (        Linux: <InstallPath>/firmware)
+
+ BranchName - The name of the Git branch to use when checking for and downloading updates
+
 
  ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
 
@@ -113,7 +117,7 @@ RTL Builder
 
  PlatformARMv8 - Build the RTL and Packages for ARMv8 architecture (0=Disable / 1=Enable) (Default: 1)
 
- 
+
  Please note that compiling BuildRTL requires Lazarus 2.0.10 (with FPC 3.2.0) or above.
 }
 

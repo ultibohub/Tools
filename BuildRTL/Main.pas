@@ -59,6 +59,7 @@ RTL Builder
  CompilerVersion=
  SourcePath=
  FirmwarePath=
+ BranchName=
 
  ARMCompiler=
  AARCH64Compiler=
@@ -90,8 +91,11 @@ RTL Builder
  SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
                                                        (        Linux: <CompilerPath>/source)
 
- FirmwarePath = The path where firmware files are located (Default Windows: <InstallPath>\firmware)
+ FirmwarePath - The path where firmware files are located (Default Windows: <InstallPath>\firmware)
                                                           (        Linux: <InstallPath>/firmware)
+
+ BranchName - The name of the Git branch to use when checking for and downloading updates
+
 
  ARMCompiler - The name of the Free Pascal ARM Compiler or Cross Compiler (Default: <Blank>)
 
@@ -171,13 +175,17 @@ const
  {$ENDIF}
  VersionId = '__version.id';
  VersionLast = '__version.last';
- DownloadZip = 'master.zip';
- DefaultVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/master/source/';
+ DownloadZip = '.zip'; {Extension of the download file, name will be the branch name}
+ DownloadFolder = 'Core-'; {Prefix of the folder in the zip, followed by branch name}
+
+ VersionFolder = '/source/';
+ DefaultVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/';
  DefaultDownloadURL = 'https://github.com/ultibohub/Core/archive/';
 
  FirmwareId = '__firmware.id';
  FirmwareLast = '__firmware.last';
- DefaultFirmwareVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/master/source/';
+ FirmwareVersionFolder = '/source/';
+ DefaultFirmwareVersionURL = 'https://raw.githubusercontent.com/ultibohub/Core/';
  DefaultFirmwareDownloadURL = 'https://github.com/raspberrypi/firmware/raw/';
 
  FirmwareDownloadFolder = '/boot/';
@@ -214,15 +222,29 @@ const
  FirmwareDownloadFilesStartRPi4 = 10;
  FirmwareDownloadFilesCountRPi4 = 9;
 
+ BranchNameMaster = 'master';
+ BranchNameDevelop = 'develop';
+ BranchNameOther = '<Other>';
+
+ BranchNames:array[0..2] of String = (
+  BranchNameMaster,
+  BranchNameDevelop,
+  BranchNameOther);
+
 type
 
   { TfrmMain }
 
   TfrmMain = class(TForm)
+    chkSaveSettings: TCheckBox;
     cmdFirmware: TButton;
     cmdDownload: TButton;
     cmdOffline: TButton;
     cmdCheck: TButton;
+    cmbBranch: TComboBox;
+    edtCustomBranch: TEdit;
+    lblCustomBranch: TLabel;
+    lblBranch: TLabel;
     mmoMain: TMemo;
     openMain: TOpenDialog;
     progressMain: TProgressBar;
@@ -236,10 +258,13 @@ type
     chkARMv7: TCheckBox;
     chkARMv8: TCheckBox;
     lblMain: TLabel;
+    procedure chkSaveSettingsClick(Sender: TObject);
+    procedure cmbBranchChange(Sender: TObject);
     procedure cmdCheckClick(Sender: TObject);
     procedure cmdDownloadClick(Sender: TObject);
     procedure cmdFirmwareClick(Sender: TObject);
     procedure cmdOfflineClick(Sender: TObject);
+    procedure edtCustomBranchChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -255,6 +280,7 @@ type
     InstallPath:String;
     SourcePath:String;
     FirmwarePath:String;
+    BranchName:String;
     CompilerName:String;
     CompilerPath:String;
     CompilerVersion:String;
@@ -275,13 +301,18 @@ type
     FirmwareVersionURL:String;
     FirmwareDownloadURL:String;
 
+    SaveSettings:Boolean;
+
     procedure LogOutput(const AValue:String);
+
+    procedure EnableControls(AEnable:Boolean);
 
     procedure DoProgress(Sender:TObject;const Percent:Double);
     procedure DoDataReceived(Sender:TObject;const ContentLength,CurrentPos:Int64);
   public
     { Public declarations }
     function LoadConfig:Boolean;
+    function SaveConfig:Boolean;
 
     function CheckForUpdates:Boolean;
     function DownloadLatest:Boolean;
@@ -885,6 +916,9 @@ begin
  FirmwarePath:=InstallPath + '/firmware';
  {$ENDIF}
 
+ {Default to the master branch}
+ BranchName:=BranchNameMaster;
+
  {The names of the ARM compiler or cross compiler}
  ARMCompiler:='';
 
@@ -904,6 +938,8 @@ begin
  FirmwareVersionURL:=DefaultFirmwareVersionURL;
  FirmwareDownloadURL:=DefaultFirmwareDownloadURL;
 
+ SaveSettings:=True;
+
  LoadConfig;
 
  {$IFDEF LINUX}
@@ -918,7 +954,7 @@ end;
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
  {}
-
+ SaveConfig;
 end;
 
 {==============================================================================}
@@ -926,14 +962,45 @@ end;
 procedure TfrmMain.FormShow(Sender: TObject);
 var
  Scale:Double;
+ Count:Integer;
 begin
- {}
+ {Show Settings}
  chkARMv6.Checked:=PlatformARMv6;
  chkARMv7.Checked:=PlatformARMv7;
  chkARMv8.Checked:=PlatformARMv8;
  lblMain.Caption:='To make sure you have the latest version of the Ultibo RTL click Check for Updates, if a new version is found you can choose to proceed with downloading and rebuilding the updated RTL.' + LineEnd + LineEnd
                 + 'You can also select from other options to force a download of the latest RTL version, extract a previously downloaded copy or simply rebuild the current code if you have made changes.' + LineEnd + LineEnd
                 + 'The progress of downloading, extracting or building the RTL or any errors encountered will be shown below.';
+
+ chkSaveSettings.Checked:=SaveSettings;
+
+ {Show Branches}
+ cmbBranch.Items.Clear;
+ for Count:=Low(BranchNames) to High(BranchNames) do
+  begin
+   cmbBranch.Items.Add(BranchNames[Count]);
+  end;
+
+ {Show Select Branch}
+ if (Length(BranchName) = 0) or (Uppercase(BranchName) = Uppercase(BranchNameOther)) then
+  begin
+   BranchName:=BranchNameMaster;
+  end;
+ if cmbBranch.Items.IndexOf(BranchName) = -1 then
+  begin
+   cmbBranch.ItemIndex:=cmbBranch.Items.IndexOf(BranchNameOther);
+   edtCustomBranch.Text:=BranchName;
+
+   lblCustomBranch.Enabled:=True;
+   edtCustomBranch.Enabled:=True;
+  end
+ else
+  begin
+   cmbBranch.ItemIndex:=cmbBranch.Items.IndexOf(BranchName);
+
+   lblCustomBranch.Enabled:=False;
+   edtCustomBranch.Enabled:=False;
+  end;
 
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
@@ -952,6 +1019,7 @@ begin
    cmdOffline.Anchors:=[akLeft,akTop];
    cmdBuild.Anchors:=[akLeft,akTop];
    cmdExit.Anchors:=[akLeft,akTop];
+   chkSaveSettings.Anchors:=[akLeft,akTop];
 
    {Resize Form}
    Width:=Trunc(Width * Scale);
@@ -964,6 +1032,7 @@ begin
    cmdOffline.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdBuild.Left:=pnlMain.Width - Trunc(150 * Scale); {907 - 757 = 150}
    cmdExit.Left:=pnlMain.Width - Trunc(150 * Scale);  {907 - 757 = 150}
+   chkSaveSettings.Left:=pnlMain.Width - Trunc(125 * Scale);  {907 - 757 = 150}
 
    {Enable Anchors}
    lblMain.Anchors:=[akLeft,akTop,akRight];
@@ -976,6 +1045,7 @@ begin
    cmdOffline.Anchors:=[akTop,akRight];
    cmdBuild.Anchors:=[akTop,akRight];
    cmdExit.Anchors:=[akTop,akRight];
+   chkSaveSettings.Anchors:=[akTop,akRight];
   end;
 
  {Check Check Button}
@@ -1020,6 +1090,13 @@ begin
    cmdExit.Left:=ClientWidth - 150; {907 - 757 = 150}
   end;
 
+ {Check Save Settings}
+ if (chkSaveSettings.Left + chkSaveSettings.Width) > Width then
+  begin
+   {Adjust Save Settings}
+   chkSaveSettings.Left:=ClientWidth - 125;
+  end;
+
  {Check Main Label}
  if (lblMain.Left + lblMain.Width) >= cmdBuild.Left then
   begin
@@ -1062,6 +1139,48 @@ end;
 
 {==============================================================================}
 
+procedure TfrmMain.chkSaveSettingsClick(Sender: TObject);
+begin
+ {}
+ SaveSettings:=chkSaveSettings.Checked;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.cmbBranchChange(Sender: TObject);
+begin
+ {}
+ if cmbBranch.ItemIndex = -1 then Exit;
+
+ if cmbBranch.ItemIndex = cmbBranch.Items.IndexOf(BranchNameOther) then
+  begin
+   BranchName:=edtCustomBranch.Text;
+
+   lblCustomBranch.Enabled:=True;
+   edtCustomBranch.Enabled:=True;
+  end
+ else
+  begin
+   BranchName:=cmbBranch.Items[cmbBranch.ItemIndex];
+
+   lblCustomBranch.Enabled:=False;
+   edtCustomBranch.Enabled:=False;
+  end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.edtCustomBranchChange(Sender: TObject);
+begin
+ {}
+ if cmbBranch.ItemIndex = cmbBranch.Items.IndexOf(BranchNameOther) then
+  begin
+   BranchName:=edtCustomBranch.Text;
+  end;
+end;
+
+{==============================================================================}
+
 procedure TfrmMain.cmdExitClick(Sender: TObject);
 begin
  {}
@@ -1073,17 +1192,7 @@ end;
 procedure TfrmMain.cmdCheckClick(Sender: TObject);
 begin
  {}
- lblMain.Enabled:=False;
- lblPlatforms.Enabled:=False;
- chkARMv6.Enabled:=False;
- chkARMv7.Enabled:=False;
- chkARMv8.Enabled:=False;
- cmdCheck.Enabled:=False;
- cmdDownload.Enabled:=False;
- cmdFirmware.Enabled:=False;
- cmdOffline.Enabled:=False;
- cmdBuild.Enabled:=False;
- cmdExit.Enabled:=False;
+ EnableControls(False);
  progressMain.Position:=0;
  try
   {Clear Memo}
@@ -1119,7 +1228,7 @@ begin
       LogOutput('');
 
       {Extract File}
-      if not ExtractFile(DownloadZip) then
+      if not ExtractFile(BranchName + DownloadZip) then
        begin
         LogOutput(' Error: Failed to extract RTL');
         Exit;
@@ -1182,6 +1291,10 @@ begin
   LogOutput('Checking for Raspberry Pi Firmware Updates');
   LogOutput('');
 
+  {Add Firmware Version URL}
+  LogOutput(' Firmware Version URL is ' + FirmwareVersionURL);
+  LogOutput('');
+
   {Check and Download Firmware}
   if not DownloadFirmware then
    begin
@@ -1194,17 +1307,7 @@ begin
   LogOutput('Check Completed');
   LogOutput('');
  finally
-  lblMain.Enabled:=True;
-  lblPlatforms.Enabled:=True;
-  chkARMv6.Enabled:=True;
-  chkARMv7.Enabled:=True;
-  chkARMv8.Enabled:=True;
-  cmdCheck.Enabled:=True;
-  cmdDownload.Enabled:=True;
-  cmdFirmware.Enabled:=True;
-  cmdOffline.Enabled:=True;
-  cmdBuild.Enabled:=True;
-  cmdExit.Enabled:=True;
+  EnableControls(True);
  end;
 end;
 
@@ -1213,17 +1316,7 @@ end;
 procedure TfrmMain.cmdDownloadClick(Sender: TObject);
 begin
  {}
- lblMain.Enabled:=False;
- lblPlatforms.Enabled:=False;
- chkARMv6.Enabled:=False;
- chkARMv7.Enabled:=False;
- chkARMv8.Enabled:=False;
- cmdCheck.Enabled:=False;
- cmdDownload.Enabled:=False;
- cmdFirmware.Enabled:=False;
- cmdOffline.Enabled:=False;
- cmdBuild.Enabled:=False;
- cmdExit.Enabled:=False;
+ EnableControls(False);
  progressMain.Position:=0;
  try
   {Clear Memo}
@@ -1248,7 +1341,7 @@ begin
     LogOutput('');
 
     {Extract File}
-    if not ExtractFile(DownloadZip) then
+    if not ExtractFile(BranchName + DownloadZip) then
      begin
       LogOutput(' Error: Failed to extract RTL');
       Exit;
@@ -1311,17 +1404,7 @@ begin
   LogOutput('Download Completed');
   LogOutput('');
  finally
-  lblMain.Enabled:=True;
-  lblPlatforms.Enabled:=True;
-  chkARMv6.Enabled:=True;
-  chkARMv7.Enabled:=True;
-  chkARMv8.Enabled:=True;
-  cmdCheck.Enabled:=True;
-  cmdDownload.Enabled:=True;
-  cmdFirmware.Enabled:=True;
-  cmdOffline.Enabled:=True;
-  cmdBuild.Enabled:=True;
-  cmdExit.Enabled:=True;
+  EnableControls(True);
  end;
 end;
 
@@ -1329,17 +1412,7 @@ end;
 
 procedure TfrmMain.cmdFirmwareClick(Sender: TObject);
 begin
- lblMain.Enabled:=False;
- lblPlatforms.Enabled:=False;
- chkARMv6.Enabled:=False;
- chkARMv7.Enabled:=False;
- chkARMv8.Enabled:=False;
- cmdCheck.Enabled:=False;
- cmdDownload.Enabled:=False;
- cmdFirmware.Enabled:=False;
- cmdOffline.Enabled:=False;
- cmdBuild.Enabled:=False;
- cmdExit.Enabled:=False;
+ EnableControls(False);
  progressMain.Position:=0;
  try
   {Clear Memo}
@@ -1361,17 +1434,7 @@ begin
   LogOutput('Download Completed');
   LogOutput('');
  finally
-  lblMain.Enabled:=True;
-  lblPlatforms.Enabled:=True;
-  chkARMv6.Enabled:=True;
-  chkARMv7.Enabled:=True;
-  chkARMv8.Enabled:=True;
-  cmdCheck.Enabled:=True;
-  cmdDownload.Enabled:=True;
-  cmdFirmware.Enabled:=True;
-  cmdOffline.Enabled:=True;
-  cmdBuild.Enabled:=True;
-  cmdExit.Enabled:=True;
+  EnableControls(True);
  end;
 end;
 
@@ -1380,17 +1443,7 @@ end;
 procedure TfrmMain.cmdOfflineClick(Sender: TObject);
 begin
  {}
- lblMain.Enabled:=False;
- lblPlatforms.Enabled:=False;
- chkARMv6.Enabled:=False;
- chkARMv7.Enabled:=False;
- chkARMv8.Enabled:=False;
- cmdCheck.Enabled:=False;
- cmdDownload.Enabled:=False;
- cmdFirmware.Enabled:=False;
- cmdOffline.Enabled:=False;
- cmdBuild.Enabled:=False;
- cmdExit.Enabled:=False;
+ EnableControls(False);
  progressMain.Position:=0;
  try
   {Clear Memo}
@@ -1484,17 +1537,7 @@ begin
   LogOutput('Extract Completed');
   LogOutput('');
  finally
-  lblMain.Enabled:=True;
-  lblPlatforms.Enabled:=True;
-  chkARMv6.Enabled:=True;
-  chkARMv7.Enabled:=True;
-  chkARMv8.Enabled:=True;
-  cmdCheck.Enabled:=True;
-  cmdDownload.Enabled:=True;
-  cmdFirmware.Enabled:=True;
-  cmdOffline.Enabled:=True;
-  cmdBuild.Enabled:=True;
-  cmdExit.Enabled:=True;
+  EnableControls(True);
  end;
 end;
 
@@ -1503,17 +1546,7 @@ end;
 procedure TfrmMain.cmdBuildClick(Sender: TObject);
 begin
  {}
- lblMain.Enabled:=False;
- lblPlatforms.Enabled:=False;
- chkARMv6.Enabled:=False;
- chkARMv7.Enabled:=False;
- chkARMv8.Enabled:=False;
- cmdCheck.Enabled:=False;
- cmdDownload.Enabled:=False;
- cmdFirmware.Enabled:=False;
- cmdOffline.Enabled:=False;
- cmdBuild.Enabled:=False;
- cmdExit.Enabled:=False;
+ EnableControls(False);
  progressMain.Position:=0;
  try
   {Clear Memo}
@@ -1575,17 +1608,7 @@ begin
   LogOutput('Completed Build');
   LogOutput('');
  finally
-  lblMain.Enabled:=True;
-  lblPlatforms.Enabled:=True;
-  chkARMv6.Enabled:=True;
-  chkARMv7.Enabled:=True;
-  chkARMv8.Enabled:=True;
-  cmdCheck.Enabled:=True;
-  cmdDownload.Enabled:=True;
-  cmdFirmware.Enabled:=True;
-  cmdOffline.Enabled:=True;
-  cmdBuild.Enabled:=True;
-  cmdExit.Enabled:=True;
+  EnableControls(True);
  end;
 end;
 
@@ -1600,10 +1623,38 @@ end;
 
 {==============================================================================}
 
+procedure TfrmMain.EnableControls(AEnable:Boolean);
+begin
+ {}
+ lblMain.Enabled:=AEnable;
+ lblPlatforms.Enabled:=AEnable;
+ chkARMv6.Enabled:=AEnable;
+ chkARMv7.Enabled:=AEnable;
+ chkARMv8.Enabled:=AEnable;
+ lblBranch.Enabled:=AEnable;
+ cmbBranch.Enabled:=AEnable;
+ lblCustomBranch.Enabled:=AEnable and (cmbBranch.ItemIndex = cmbBranch.Items.IndexOf(BranchNameOther));
+ edtCustomBranch.Enabled:=AEnable and lblCustomBranch.Enabled;
+
+ cmdCheck.Enabled:=AEnable;
+ cmdDownload.Enabled:=AEnable;
+ cmdFirmware.Enabled:=AEnable;
+ cmdOffline.Enabled:=AEnable;
+ cmdBuild.Enabled:=AEnable;
+ cmdExit.Enabled:=AEnable;
+
+ chkSaveSettings.Enabled:=AEnable;
+
+ Application.ProcessMessages;
+end;
+
+{==============================================================================}
+
 procedure TfrmMain.DoProgress(Sender:TObject;const Percent:Double);
 begin
  {}
  progressMain.Position:=Trunc(Percent);
+
  Application.ProcessMessages;
 end;
 
@@ -1622,7 +1673,8 @@ begin
     begin
      progressMain.Position:=100;
     end;
-   Application.ProcessMessages;
+
+    Application.ProcessMessages;
   end;
 end;
 
@@ -1645,6 +1697,16 @@ begin
    begin
     IniFile:=TIniFile.Create(Filename);
     try
+     Section:='General';
+
+     {Get Width}
+     Width:=IniFile.ReadInteger(Section,'Width',Width);
+     {Get Height}
+     Height:=IniFile.ReadInteger(Section,'Height',Height);
+
+     {Get SaveSettings}
+     SaveSettings:=IniFile.ReadBool(Section,'SaveSettings',SaveSettings);
+
      Section:='BuildRTL';
 
      {Get PathPrefix}
@@ -1661,6 +1723,9 @@ begin
      SourcePath:=IniFile.ReadString(Section,'SourcePath',SourcePath);
      {Get FirmwarePath}
      FirmwarePath:=IniFile.ReadString(Section,'FirmwarePath',FirmwarePath);
+
+     {Get BranchName}
+     BranchName:=IniFile.ReadString(Section,'BranchName',BranchName);
 
      {Get ARMCompiler}
      ARMCompiler:=IniFile.ReadString(Section,'ARMCompiler',ARMCompiler);
@@ -1699,6 +1764,60 @@ begin
  end;
 end;
 
+function TfrmMain.SaveConfig:Boolean;
+var
+ Section:String;
+ Filename:String;
+ IniFile:TIniFile;
+begin
+ {}
+ Result:=False;
+ try
+  {Get Filename}
+  Filename:=ChangeFileExt(Application.ExeName,'.ini');
+
+  IniFile:=TIniFile.Create(Filename);
+  try
+   Section:='General';
+
+   {Check SaveSettings}
+   if SaveSettings then
+    begin
+     {Set Width}
+     IniFile.WriteInteger(Section,'Width',Width);
+     {Set Height}
+     IniFile.WriteInteger(Section,'Height',Height);
+
+     {Set SaveSettings}
+     IniFile.WriteBool(Section,'SaveSettings',SaveSettings);
+
+     Section:='BuildRTL';
+
+     {Set BranchName}
+     IniFile.WriteString(Section,'BranchName',BranchName);
+
+     {Set PlatformARMv6}
+     IniFile.WriteBool(Section,'PlatformARMv6',PlatformARMv6);
+     {Set PlatformARMv7}
+     IniFile.WriteBool(Section,'PlatformARMv7',PlatformARMv7);
+     {Set PlatformARMv8}
+     IniFile.WriteBool(Section,'PlatformARMv8',PlatformARMv8);
+    end
+   else
+    begin
+     {Set SaveSettings}
+     IniFile.WriteBool(Section,'SaveSettings',SaveSettings);
+    end;
+  finally
+   IniFile.Free;
+  end;
+
+  Result:=True;
+ except
+  {}
+ end;
+end;
+
 function TfrmMain.CheckForUpdates:Boolean;
 var
  FileURL:String;
@@ -1712,6 +1831,7 @@ begin
  {}
  Result:=False;
  try
+  if Length(BranchName) = 0 then Exit;
   if Length(SourcePath) = 0 then Exit;
   if Length(VersionURL) = 0 then Exit;
 
@@ -1724,7 +1844,7 @@ begin
    end;
 
   {Get FileURL}
-  FileURL:=VersionURL + VersionId;
+  FileURL:=VersionURL + BranchName + VersionFolder + VersionId;
   LogOutput('  Version File URL is ' + FileURL);
   LogOutput('');
 
@@ -1806,6 +1926,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception checking for RTL updates - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;
@@ -1833,12 +1954,12 @@ begin
    end;
 
   {Get FileURL}
-  FileURL:=DownloadURL + DownloadZip;
+  FileURL:=DownloadURL + BranchName + DownloadZip;
   LogOutput('  Download File URL is ' + FileURL);
   LogOutput('');
 
   {Get Filename}
-  Filename:=AddTrailingSlash(SourcePath) + DownloadZip;
+  Filename:=AddTrailingSlash(SourcePath) + BranchName + DownloadZip;
   LogOutput('  Download Filename is ' + Filename);
   LogOutput('');
 
@@ -1858,7 +1979,7 @@ begin
    Client.OnDataReceived:=DoDataReceived;
 
    {Get Zip File}
-   LogOutput('  Downloading file: ' + DownloadZip);
+   LogOutput('  Downloading file: ' + BranchName + DownloadZip);
    LogOutput('');
    Client.Get(FileURL,Filename);
 
@@ -1870,6 +1991,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception downloading latest RTL - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;
@@ -1942,7 +2064,7 @@ begin
 
    {Get Source and Destination}
    Destname:=ExtractFileDir(Pathname);
-   Sourcename:=AddTrailingSlash(Tempname) + 'Core-master';
+   Sourcename:=AddTrailingSlash(Tempname) + DownloadFolder + BranchName;
 
    {Copy Files}
    if CopyDirTree(Sourcename,Destname,[cffOverwriteFile,cffCreateDestDirectory,cffPreserveTime]) then
@@ -1972,6 +2094,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception extracting RTL - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;
@@ -2863,6 +2986,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception creating RTL build script - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;
@@ -2915,6 +3039,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception executing RTL build script - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;
@@ -2936,6 +3061,7 @@ begin
  {}
  Result:=False;
  try
+  if Length(BranchName) = 0 then Exit;
   if Length(SourcePath) = 0 then Exit;
   if Length(FirmwarePath) = 0 then Exit;
   if Length(FirmwareVersionURL) = 0 then Exit;
@@ -2967,7 +3093,7 @@ begin
    end;
 
   {Get FileURL}
-  FileURL:=FirmwareVersionURL + FirmwareId;
+  FileURL:=FirmwareVersionURL + BranchName + FirmwareVersionFolder + FirmwareId;
   LogOutput('  Firmware File URL is ' + FileURL);
   LogOutput('');
 
@@ -3216,6 +3342,7 @@ begin
   on E: Exception do
    begin
     LogOutput(' Error: Exception downloading latest firmware - Message: ' + E.Message);
+    LogOutput('');
    end;
  end;
 end;

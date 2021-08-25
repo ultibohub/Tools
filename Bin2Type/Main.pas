@@ -57,7 +57,11 @@ uses
   StdCtrls;
 
 type
+
+  { TfrmMain }
+
   TfrmMain = class(TForm)
+    chkStandalone: TCheckBox;
     cmdConvert: TButton;
     cmdExit: TButton;
     lblSource: TLabel;
@@ -75,6 +79,7 @@ type
     saveMain: TSaveDialog;
     lblName: TLabel;
     txtName: TEdit;
+    procedure chkStandaloneClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -93,6 +98,7 @@ type
     { Private declarations }
     FSource:String;
     FDest:String;
+    FStandalone:Boolean;
     FName:String;
     FOffset:LongWord;
     FSize:LongWord;
@@ -161,6 +167,23 @@ begin
      SourceFile.Position:=ReadStart;
      DestFile.Position:=0;
 
+     if FStandalone then
+      begin
+       {Create Interface}
+       WorkBuffer:='unit ' + ChangeFileExt(ExtractFileName(FDest),'') + ';';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='interface';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='';
+       WriteBuffer(DestFile,WorkBuffer);
+      end;
+
+     {Create Type and Var}
      WorkBuffer:='type';
      WriteBuffer(DestFile,WorkBuffer);
 
@@ -210,6 +233,28 @@ begin
      WorkBuffer:=' );';
      WriteBuffer(DestFile,WorkBuffer);
 
+     if FStandalone then
+      begin
+       {Create Implementation}
+       WorkBuffer:='';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='implementation';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:=' // Nothing';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='';
+       WriteBuffer(DestFile,WorkBuffer);
+
+       WorkBuffer:='end.';
+       WriteBuffer(DestFile,WorkBuffer);
+      end;
+
      Result:=True;
     finally
      DestFile.Free;
@@ -246,6 +291,7 @@ begin
  {}
  FSource:='';
  FDest:='';
+ FStandalone:=False;
  FName:=DefaultName;
  FOffset:=0;
  FSize:=0;
@@ -268,6 +314,7 @@ begin
  {}
  txtSource.Text:=FSource;
  txtDest.Text:=FDest;
+ chkStandalone.Checked:=FStandalone;
  txtName.Text:=FName;
  txtOffset.Text:=IntToStr(FOffset);
  txtSize.Text:=IntToStr(FSize);
@@ -420,6 +467,14 @@ begin
   begin
    txtDest.Text:=saveMain.FileName;
   end;
+end;
+
+{==============================================================================}
+
+procedure TfrmMain.chkStandaloneClick(Sender: TObject);
+begin
+ {}
+ FStandalone:=chkStandalone.Checked;
 end;
 
 {==============================================================================}
