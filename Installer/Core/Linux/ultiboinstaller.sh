@@ -444,7 +444,7 @@ mkdir -p $BASE/firmware/RPi4
 
 # Download RPi firmware
 echo "Downloading Raspberry Pi firmware $FIRMWARE_ID"
-echo " Pi A/B/A+/B+/Zero"
+echo " Pi A/B/A+/B+/Zero/ZeroW"
 download "$BASE/firmware/RPi/LICENCE.broadcom" $FIRMWARE_URL/LICENCE.broadcom
 download "$BASE/firmware/RPi/bootcode.bin" $FIRMWARE_URL/bootcode.bin
 download "$BASE/firmware/RPi/fixup.dat" $FIRMWARE_URL/fixup.dat
@@ -459,11 +459,11 @@ download "$BASE/firmware/RPi/start_x.elf" $FIRMWARE_URL/start_x.elf
 # Copy firmware from RPi to RPi2 and RPi3 folders
 echo " Pi 2B"
 cp $BASE/firmware/RPi/* $BASE/firmware/RPi2
-echo " Pi 3B/3B+/3A+"
+echo " Pi 3B/3B+/3A+/CM3/Zero2W"
 cp $BASE/firmware/RPi/* $BASE/firmware/RPi3
 
 # Download RPi4 firmware
-echo " Pi 4B/400"
+echo " Pi 4B/400/CM4"
 download "$BASE/firmware/RPi4/LICENCE.broadcom" $FIRMWARE_URL/LICENCE.broadcom
 download "$BASE/firmware/RPi4/fixup4.dat" $FIRMWARE_URL/fixup4.dat
 download "$BASE/firmware/RPi4/fixup4cd.dat" $FIRMWARE_URL/fixup4cd.dat
@@ -570,13 +570,14 @@ echo "Creating configuration files"
 # RPI.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI.CFG"
 echo "#" > $CONFIGFILE
-echo "# Raspberry Pi (A/B/A+/B+/Zero) specific config file" >> $CONFIGFILE
+echo "# Raspberry Pi A/B/A+/B+/Zero/ZeroW specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
 echo "-CfVFPV2" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI" >> $CONFIGFILE
+echo "-dBCM2708" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv6-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv6-ultibo/packages" >> $CONFIGFILE
@@ -593,6 +594,7 @@ echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI2" >> $CONFIGFILE
+echo "-dBCM2709" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
@@ -602,13 +604,14 @@ echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 # RPI3.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI3.CFG"
 echo "#" > $CONFIGFILE
-echo "# Raspberry Pi 3B specific config file" >> $CONFIGFILE
+echo "# Raspberry Pi 3B/3B+/3A+/CM3/Zero2W specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
 echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI3" >> $CONFIGFILE
+echo "-dBCM2710" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
@@ -618,13 +621,14 @@ echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 # RPI4.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI4.CFG"
 echo "#" > $CONFIGFILE
-echo "# Raspberry Pi 4B specific config file" >> $CONFIGFILE
+echo "# Raspberry Pi 4B/400/CM4 specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
 echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI4" >> $CONFIGFILE
+echo "-dBCM2711" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
