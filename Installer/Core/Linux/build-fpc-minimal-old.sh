@@ -4,7 +4,7 @@
 # Based on the setup.sh script from http://getlazarus.org
 
 # The full version number of the stable compiler
-FPC_STABLE=3.2.2
+FPC_STABLE=3.0.2
 
 # Prevent this script from running as root 
 if [ "$(id -u)" = "0" ]; then
@@ -64,10 +64,6 @@ fi
 if [ "$CPU" = "armv7l" ]; then
 	CPU="arm"
     COMPILER="ppcarm"
-fi
-
-if [ "$CPU" = "aarch64" ]; then
-    COMPILER="ppca64"
 fi
 
 # Setup the paths
