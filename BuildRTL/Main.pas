@@ -125,7 +125,7 @@ unit Main;
 
 {$MODE Delphi}
 
-{--$DEFINE BETA_BUILD}
+{$DEFINE BETA_BUILD}
 
 interface
 
