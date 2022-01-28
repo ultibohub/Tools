@@ -18,8 +18,8 @@ object frmMain: TfrmMain
   LCLVersion = '2.0.2.0'
   object mmoMain: TMemo
     Left = 0
-    Height = 382
-    Top = 302
+    Height = 376
+    Top = 308
     Width = 923
     Align = alClient
     Color = clBtnFace
@@ -37,12 +37,12 @@ object frmMain: TfrmMain
   end
   object pnlMain: TPanel
     Left = 0
-    Height = 302
+    Height = 308
     Top = 0
     Width = 923
     Align = alTop
     BevelOuter = bvNone
-    ClientHeight = 302
+    ClientHeight = 308
     ClientWidth = 923
     ParentShowHint = False
     ShowHint = True
@@ -50,7 +50,7 @@ object frmMain: TfrmMain
     object lblCompiler: TLabel
       Left = 18
       Height = 13
-      Top = 270
+      Top = 277
       Width = 75
       Anchors = [akLeft, akBottom]
       Caption = 'Compiler Output'
@@ -130,7 +130,7 @@ object frmMain: TfrmMain
     object progressMain: TProgressBar
       Left = 4
       Height = 10
-      Top = 291
+      Top = 297
       Width = 915
       Anchors = [akLeft, akRight, akBottom]
       TabOrder = 9

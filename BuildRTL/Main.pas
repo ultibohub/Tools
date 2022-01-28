@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2021 - SoftOz Pty Ltd.
+Copyright (C) 2022 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -125,6 +125,8 @@ unit Main;
 
 {$MODE Delphi}
 
+{--$DEFINE BETA_BUILD}
+
 interface
 
 uses
@@ -173,6 +175,13 @@ const
  SlashChar = '/';
  BuildScript = '__buildrtl.sh';
  {$ENDIF}
+
+ BetaId = '__beta.id';
+ {$IFDEF BETA_BUILD}
+ BetaVersion = '2.5-active';
+ BetaVersionName = 'Ultibo 2.5';
+ {$ENDIF BETA_BUILD}
+
  VersionId = '__version.id';
  VersionLast = '__version.last';
  DownloadZip = '.zip'; {Extension of the download file, name will be the branch name}
@@ -224,11 +233,17 @@ const
 
  BranchNameMaster = 'master';
  BranchNameDevelop = 'develop';
+ {$IFDEF BETA_BUILD}
+ BranchNameNext = 'next';
+ {$ENDIF BETA_BUILD}
  BranchNameOther = '<Other>';
 
- BranchNames:array[0..2] of String = (
+ BranchNames:array[0..{$IFDEF BETA_BUILD}3{$ELSE}2{$ENDIF BETA_BUILD}] of String = (
   BranchNameMaster,
   BranchNameDevelop,
+  {$IFDEF BETA_BUILD}
+  BranchNameNext,
+  {$ENDIF BETA_BUILD}
   BranchNameOther);
 
 type
@@ -313,6 +328,8 @@ type
     { Public declarations }
     function LoadConfig:Boolean;
     function SaveConfig:Boolean;
+
+    function CheckForBeta:Boolean;
 
     function CheckForUpdates:Boolean;
     function DownloadLatest:Boolean;
@@ -916,8 +933,13 @@ begin
  FirmwarePath:=InstallPath + '/firmware';
  {$ENDIF}
 
+ {$IFNDEF BETA_BUILD}
  {Default to the master branch}
  BranchName:=BranchNameMaster;
+ {$ELSE}
+ {Default to the next branch}
+ BranchName:=BranchNameNext;
+ {$ENDIF BETA_BUILD}
 
  {The names of the ARM compiler or cross compiler}
  ARMCompiler:='';
@@ -984,7 +1006,11 @@ begin
  {Show Select Branch}
  if (Length(BranchName) = 0) or (Uppercase(BranchName) = Uppercase(BranchNameOther)) then
   begin
+   {$IFNDEF BETA_BUILD}
    BranchName:=BranchNameMaster;
+   {$ELSE}
+   BranchName:=BranchNameNext;
+   {$ENDIF BETA_BUILD}
   end;
  if cmbBranch.Items.IndexOf(BranchName) = -1 then
   begin
@@ -1001,6 +1027,11 @@ begin
    lblCustomBranch.Enabled:=False;
    edtCustomBranch.Enabled:=False;
   end;
+ {$IFDEF BETA_BUILD}
+ cmbBranch.Enabled:=False;
+ lblCustomBranch.Enabled:=False;
+ edtCustomBranch.Enabled:=False;
+ {$ENDIF BETA_BUILD}
 
  {Check PixelsPerInch}
  if PixelsPerInch > 96 then
@@ -1206,6 +1237,16 @@ begin
   LogOutput(' Version URL is ' + VersionURL);
   LogOutput('');
 
+  {Check for Beta}
+  if not CheckForBeta then
+   begin
+    {$IFDEF BETA_BUILD}
+    {Prompt to Update}
+    MessageDlg('This installation was released for the ' + BetaVersionName + ' beta and has now expired.' + LineEnd + LineEnd + 'Please download the latest installer from https://ultibo.org',mtInformation,[mbOk],0);
+    Exit;
+    {$ENDIF BETA_BUILD}
+   end;
+
   {Check for Updates}
   if CheckForUpdates then
    begin
@@ -1326,6 +1367,16 @@ begin
   LogOutput('Downloading Latest Ultibo RTL');
   LogOutput('');
 
+  {Check for Beta}
+  if not CheckForBeta then
+   begin
+    {$IFDEF BETA_BUILD}
+    {Prompt to Update}
+    MessageDlg('This installation was released for the ' + BetaVersionName + ' beta and has now expired.' + LineEnd + LineEnd + 'Please download the latest installer from https://ultibo.org',mtInformation,[mbOk],0);
+    Exit;
+    {$ENDIF BETA_BUILD}
+   end;
+
   {Download Latest}
   if not DownloadLatest then
    begin
@@ -1422,6 +1473,16 @@ begin
   LogOutput('Downloading Latest Raspberry Pi Firmware');
   LogOutput('');
 
+  {Check for Beta}
+  if not CheckForBeta then
+   begin
+    {$IFDEF BETA_BUILD}
+    {Prompt to Update}
+    MessageDlg('This installation was released for the ' + BetaVersionName + ' beta and has now expired.' + LineEnd + LineEnd + 'Please download the latest installer from https://ultibo.org',mtInformation,[mbOk],0);
+    Exit;
+    {$ENDIF BETA_BUILD}
+   end;
+
   {Download Firmware}
   if not DownloadFirmware then
    begin
@@ -1452,6 +1513,16 @@ begin
   {Add Banner}
   LogOutput('Extracting Offline Ultibo RTL');
   LogOutput('');
+
+  {Check for Beta}
+  if not CheckForBeta then
+   begin
+    {$IFDEF BETA_BUILD}
+    {Prompt to Update}
+    MessageDlg('This installation was released for the ' + BetaVersionName + ' beta and has now expired.' + LineEnd + LineEnd + 'Please download the latest installer from https://ultibo.org',mtInformation,[mbOk],0);
+    Exit;
+    {$ENDIF BETA_BUILD}
+   end;
 
   {Browse for file}
   openMain.Title:='Extract Offline RTL';
@@ -1555,6 +1626,16 @@ begin
   {Add Banner}
   LogOutput('Building Current Ultibo RTL');
   LogOutput('');
+
+  {Check for Beta}
+  if not CheckForBeta then
+   begin
+    {$IFDEF BETA_BUILD}
+    {Prompt to Update}
+    MessageDlg('This installation was released for the ' + BetaVersionName + ' beta and has now expired.' + LineEnd + LineEnd + 'Please download the latest installer from https://ultibo.org',mtInformation,[mbOk],0);
+    Exit;
+    {$ENDIF BETA_BUILD}
+   end;
 
   {Add Path Prefix}
   LogOutput(' Path Prefix is ' + PathPrefix);
@@ -1725,7 +1806,11 @@ begin
      FirmwarePath:=IniFile.ReadString(Section,'FirmwarePath',FirmwarePath);
 
      {Get BranchName}
+     {$IFNDEF BETA_BUILD}
      BranchName:=IniFile.ReadString(Section,'BranchName',BranchName);
+     {$ELSE}
+     BranchName:=BranchNameNext;
+     {$ENDIF BETA_BUILD}
 
      {Get ARMCompiler}
      ARMCompiler:=IniFile.ReadString(Section,'ARMCompiler',ARMCompiler);
@@ -1794,7 +1879,9 @@ begin
      Section:='BuildRTL';
 
      {Set BranchName}
+     {$IFNDEF BETA_BUILD}
      IniFile.WriteString(Section,'BranchName',BranchName);
+     {$ENDIF BETA_BUILD}
 
      {Set PlatformARMv6}
      IniFile.WriteBool(Section,'PlatformARMv6',PlatformARMv6);
@@ -1815,6 +1902,102 @@ begin
   Result:=True;
  except
   {}
+ end;
+end;
+
+function TfrmMain.CheckForBeta:Boolean;
+var
+ FileURL:String;
+ Filename:String;
+ {$IFDEF BETA_BUILD}
+ Lines:TStringList;
+ FileVersion:String;
+ Client:TFPHTTPClient;
+ {$ENDIF BETA_BUILD}
+begin
+ Result:=False;
+ try
+  if Length(BranchName) = 0 then Exit;
+  if Length(SourcePath) = 0 then Exit;
+  if Length(VersionURL) = 0 then Exit;
+
+  {Check Source Path}
+  if not DirectoryExists(StripTrailingSlash(SourcePath)) then
+   begin
+    LogOutput(' Error: SourcePath "' + SourcePath + '" does not exist');
+    LogOutput('');
+    Exit;
+   end;
+
+  {Get FileURL}
+  FileURL:=VersionURL + BranchName + VersionFolder + BetaId;
+  {$IFDEF BETA_BUILD}
+  LogOutput('  Beta Version File URL is ' + FileURL);
+  LogOutput('');
+  {$ENDIF BETA_BUILD}
+
+  {Get Filename}
+  Filename:=AddTrailingSlash(SourcePath) + BetaId;
+  {$IFDEF BETA_BUILD}
+  LogOutput('  Beta Version Filename is ' + Filename);
+  LogOutput('');
+  {$ENDIF BETA_BUILD}
+
+  {Check File}
+  if FileExists(Filename) then
+   begin
+    {Delete File}
+    DeleteFile(Filename);
+
+    if FileExists(Filename) then Exit;
+   end;
+
+  {$IFNDEF BETA_BUILD}
+  Result:=True;
+  {$ELSE}
+  {Set Defaults}
+  FileVersion:='<Unknown>';
+
+  {Create HTTP Client}
+  Client:=TFPHTTPClient.Create(nil);
+  try
+   Client.AllowRedirect:=True;
+
+   {Get Version File}
+   LogOutput('  Downloading file: ' + BetaId);
+   LogOutput('');
+   Client.Get(FileURL,Filename);
+
+   Lines:=TStringList.Create;
+   try
+    {Open Version File}
+    Lines.LoadFromFile(Filename);
+    if Lines.Count = 0 then
+     begin
+      LogOutput(' Error: Beta version file contains no data');
+      LogOutput('');
+      Exit;
+     end;
+
+    {Get File Version}
+    FileVersion:=Lines.Strings[0];
+    LogOutput('  Beta Version is ' + FileVersion);
+    LogOutput('');
+
+    Result:=(BetaVersion = FileVersion);
+   finally
+    Lines.Free;
+   end;
+  finally
+   Client.Free;
+  end;
+  {$ENDIF BETA_BUILD}
+ except
+  on E: Exception do
+   begin
+    LogOutput(' Error: Exception checking for beta expiry - Message: ' + E.Message);
+    LogOutput('');
+   end;
  end;
 end;
 
