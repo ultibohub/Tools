@@ -85,7 +85,7 @@ RTL Builder
  CompilerPath - The path where the Ultibo version of FPC is installed (Default Windows: <InstallPath>\fpc\<CompilerVersion>)
                                                                       (        Linux: <InstallPath>/fpc)
 
- CompilerVersion - The version of the FPC compiler (Default: 3.1.1)
+ CompilerVersion - The version of the FPC compiler (Default: 3.2.2)
 
 
  SourcePath - The path to RTL and Packages source code (Default Windows: <CompilerPath>\source)
