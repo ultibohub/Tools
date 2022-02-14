@@ -14,6 +14,7 @@ echo "Linux installer for Free Pascal and Lazarus (Ultibo edition)"
 echo "------------------------------------------------------------"
 echo "This installation will download the sources for:"
 echo "  Ultibo core"
+echo "  Ultibo tools"
 echo "  Ultibo examples"
 echo "  Free Pascal (Ultibo edition)"
 echo "  Lazarus IDE (Ultibo edition)"
@@ -42,14 +43,15 @@ case $REPLY in
 		;;
 esac
 
-# The version of the compiler we are building and the Git branches for downloading
+# The versions and Git branches of FreePascal and Lazarus we are building
 FPC_BUILD=3.2.2
 FPC_BRANCH="ultibo-3.2.2"
 FPC_NONSTABLE=""
-# LAZARUS_BRANCH="ultibo-2.2" # Currently using the old Lazarus release for testing
-LAZARUS_BRANCH="next"
+LAZARUS_BUILD="2.2.0U"
+LAZARUS_CONFIG="110"
+LAZARUS_BRANCH="ultibo-2.2" 
 
-# The version of Ultibo Core we are building
+# The Git branch of Ultibo Core we are building
 # ULTIBO_BRANCH="master" # Currently using the NEXT branch for testing
 ULTIBO_BRANCH="next"
 
@@ -61,6 +63,9 @@ if [ $# -ge 1 ]; then
 			FPC_BUILD=3.3.1
 			FPC_BRANCH="ultibo"
 			FPC_NONSTABLE="MAIN"
+            LAZARUS_BUILD="2.3.0U"
+            LAZARUS_CONFIG="110"
+            LAZARUS_BRANCH="ultibo"
 			;;
 		[fF][iI][xX][eE][sS])
 			# Build the fixes branch
@@ -74,7 +79,7 @@ fi
 # Check for a non stable version of FPC requested
 if [ "$FPC_NONSTABLE" != "" ]; then
 	echo "You have chosen to install the $FPC_NONSTABLE branch of Free Pascal"
-	echo "which may contain bugs that prevent correct operation."
+	echo "and Lazarus which may contain bugs that prevent correct operation."
 	echo
 	echo "If this is not what you intended to do then answer No and"
 	echo "rerun the script without parameters to install the stable"
@@ -409,10 +414,6 @@ fi
 
 if [ "$CPU" = "x86_64" ]; then
     COMPILER="ppcx64"
-
-    # Temporarily use 3.1.1 as the starting compiler
-    # FPC_STABLE=3.1.1
-    # FPC_OVERRIDE="OVERRIDEVERSIONCHECK=1"
 fi
 
 if [ "$CPU" = "armv6l" ]; then
@@ -475,7 +476,7 @@ exitFailure
 # Download Lazarus (Ultibo edition)
 if [ "$LAZARUS" = "Y" ]; then
     echo "Downloading Lazarus (Ultibo edition)"
-    download "$BASE/downloads/Lazarus.zip" $URL/Lazarus/archive/$LAZARUS_BRANCH.zip
+    download "$BASE/downloads/LazarusIDE.zip" $URL/LazarusIDE/archive/$LAZARUS_BRANCH.zip
     exitFailure
 fi
 
@@ -500,7 +501,7 @@ unzip -q downloads/FreePascal.zip -d downloads
 # Unzip Lazarus (Ultibo edition)
 if [ "$LAZARUS" = "Y" ]; then
     echo "Extracting Lazarus (Ultibo edition)"
-    unzip -q downloads/Lazarus.zip -d downloads
+    unzip -q downloads/LazarusIDE.zip -d downloads
 fi
 
 # Move files to correct locations
@@ -515,7 +516,7 @@ mv downloads/Core-$ULTIBO_BRANCH/source/__buildrtl.sh $BASE/fpc/source/__buildrt
 mv downloads/Core-$ULTIBO_BRANCH/units $BASE/fpc/units
 mv downloads/Examples-master $BASE/examples
 if [ "$LAZARUS" = "Y" ]; then
-    mv downloads/Lazarus-$LAZARUS_BRANCH/* $BASE
+    mv downloads/LazarusIDE-$LAZARUS_BRANCH/* $BASE
 fi
 rm -rf $BASE/examples/Synapse
 
@@ -607,8 +608,8 @@ $BASE/fpc/bin/fpcmkcfg -d basepath=$BASE/fpc/lib/fpc/$FPC_BUILD -o $BASE/fpc/bin
 $BASE/fpc/bin/fpcmkcfg -p -d basepath=$BASE/fpc/lib/fpc/$FPC_BUILD -o $BASE/fpc/etc/fpc.cfg
 
 # Add the compiler we just built to our paths
-export PPC_CONFIG_PATH=$BASE/fpc/bin
-export PATH=$PPC_CONFIG_PATH:$OLDPATH
+export ULTIBO_CONFIG_PATH=$BASE/fpc/bin
+export PATH=$ULTIBO_CONFIG_PATH:$OLDPATH
 
 # Check if cross compiler required
 if [ "$CPU" != "arm" ]; then
@@ -762,38 +763,38 @@ if [ "$LAZARUS" = "Y" ]; then
     export FPCDIR=$BASE/fpc/lib/fpc/$FPC_BUILD
 
     # Update the Makefiles
-    cd $BASE
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/ide
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/components
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/tools
-    fpcmake -T$CPU-linux -v
-    exitFailure
+    # cd $BASE
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/ide
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/components
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/tools
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
     
     # Temporary to fix old Lazarus release
-    cd $BASE/lcl/interfaces
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/lcl/interfaces/fpgui
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/lcl/interfaces/win32
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/lcl/interfaces/wince
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/components/anchordocking
-    fpcmake -T$CPU-linux -v
-    exitFailure
-    cd $BASE/components/anchordocking/design
-    fpcmake -T$CPU-linux -v
-    exitFailure
+    # cd $BASE/lcl/interfaces
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/lcl/interfaces/fpgui
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/lcl/interfaces/win32
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/lcl/interfaces/wince
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/components/anchordocking
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
+    # cd $BASE/components/anchordocking/design
+    # fpcmake -T$CPU-linux -v
+    # exitFailure
     
     cd $BASE
 
@@ -819,7 +820,7 @@ if [ "$LAZARUS" = "Y" ]; then
     # Create a Lazarus startup file
     STARTUPFILE="$BASE/lazarus.sh"
     echo "export PATH=$BASE/fpc/bin:\$PATH" > $STARTUPFILE
-    echo "export PPC_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
+    echo "export ULTIBO_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
     echo "$BASE/lazarus" >> $STARTUPFILE
     chmod +x $STARTUPFILE
 
@@ -832,7 +833,7 @@ if [ "$LAZARUS" = "Y" ]; then
     echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" > $OPTIONSFILE
     echo "<CONFIG>" >> $OPTIONSFILE
     echo "  <EnvironmentOptions>" >> $OPTIONSFILE
-    echo "    <Version Value=\"109\" Lazarus=\"1.6U\"/>" >> $OPTIONSFILE
+    echo "    <Version Value=\"$LAZARUS_CONFIG\" Lazarus=\"$LAZARUS_BUILD\"/>" >> $OPTIONSFILE
     echo "    <LazarusDirectory Value=\"$BASE\">" >> $OPTIONSFILE
     echo "    </LazarusDirectory>" >> $OPTIONSFILE
     echo "    <CompilerFilename Value=\"$BASE/fpc/bin/fpc\">" >> $OPTIONSFILE
@@ -879,6 +880,11 @@ if [ "$LAZARUS" = "Y" ]; then
     $BASE/lazbuild --os=linux --cpu=$CPU $BASE/downloads/Tools-$ULTIBO_BRANCH/BuildRTL/BuildRTL.lpi
     exitFailure
     cp $BASE/downloads/Tools-$ULTIBO_BRANCH/BuildRTL/lib/$CPU-linux/BuildRTL $BASE/tools/BuildRTL
+    
+    # Create the BuildRTL.ini file
+    CONFIGFILE="$BASE/tools/BuildRTL.ini"
+    echo "[BuildRTL]" > $CONFIGFILE
+    echo "CompilerVersion=$FPC_BUILD" >> $CONFIGFILE
 else
     # Restore our path
     export PATH=$OLDPATH
