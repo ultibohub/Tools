@@ -1,7 +1,7 @@
 {
 Ultibo Configure RTL Tool.
 
-Copyright (C) 2021 - SoftOz Pty Ltd.
+Copyright (C) 2022 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -47,6 +47,13 @@ Configure RTL
   QEMUVPB.CFG
 
   environmentoptions.xml
+
+  lazarus.cfg
+
+  BuildRTL.ini
+
+  QEMULauncher.ini
+
   
 }
 
@@ -72,6 +79,7 @@ var
  LazarusVersion:String;
  LazarusVersionNo:String;
  ConfigurationPath:String;
+ LazarusProfilePath:String;
  
 begin
  {Install will pass 4 parameters:
@@ -118,6 +126,9 @@ begin
      ConfigurationPath:=InstallPath + '/fpc/bin';
      {$ENDIF}
 
+     {Get Lazarus Profile (Optional)}
+     LazarusProfilePath:=ParamStr(5);
+
      {Check Configuration Path}
      if DirectoryExists(ConfigurationPath) then
       begin
@@ -145,6 +156,15 @@ begin
 
        {Create environmentoptions.xml}
        CreateOptions('environmentoptions.xml',AddTrailingSlash(InstallPath),AddTrailingSlash(CompilerPath),LazarusVersion,LazarusVersionNo);
+
+       {Create lazarus.cfg}
+       CreateConfig('lazarus.cfg',AddTrailingSlash(InstallPath),LazarusProfilePath);
+
+       {Create BuildRTL.ini}
+       CreateBuildRTL('tools\BuildRTL.ini',AddTrailingSlash(InstallPath),CompilerVersion);
+
+       {Create QEMULauncher.ini}
+       CreateQEMULauncher('tools\QEMULauncher.ini',AddTrailingSlash(InstallPath));
        {$ENDIF}
        {$IFDEF LINUX}
        {Don't Edit FP.CFG or FPC.CFG}
@@ -164,7 +184,17 @@ begin
        {Edit QEMUVPB.CFG}
        EditConfiguration('QEMUVPB.CFG',AddTrailingSlash(ConfigurationPath),'%INSTALLDIRECTORY%',CompilerPath);
 
-       //To Do //environmentoptions.xml
+       {Create environmentoptions.xml}
+       CreateOptions('environmentoptions.xml',AddTrailingSlash(InstallPath),AddTrailingSlash(CompilerPath),LazarusVersion,LazarusVersionNo);
+
+       {Create lazarus.cfg}
+       CreateConfig('lazarus.cfg',AddTrailingSlash(InstallPath),LazarusProfilePath);
+
+       {Create BuildRTL.ini}
+       CreateBuildRTL('tools/BuildRTL.ini',AddTrailingSlash(InstallPath),CompilerVersion);
+
+       {Create QEMULauncher.ini}
+       CreateQEMULauncher('tools/QEMULauncher.ini',AddTrailingSlash(InstallPath));
        {$ENDIF}
       end;
     end;
