@@ -1,7 +1,7 @@
 {
 Ultibo Configure RTL Tool.
 
-Copyright (C) 2021 - SoftOz Pty Ltd.
+Copyright (C) 2022 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -48,6 +48,12 @@ Configure RTL
 
   environmentoptions.xml
 
+  lazarus.cfg
+
+  BuildRTL.ini
+
+  QEMULauncher.ini
+
 }
 
 unit Main;
@@ -80,6 +86,12 @@ function StripTrailingSlash(const FilePath:String):String;
 function EditConfiguration(const AName,APath,ASearch,AReplace:String):Boolean;
 
 function CreateOptions(const AName,AInstallPath,ACompilerPath,ALazarusVersion,ALazarusVersionNo:String):Boolean;
+
+function CreateConfig(const AName,AInstallPath,AProfilePath:String):Boolean;
+
+function CreateBuildRTL(const AName,AInstallPath,ACompilerVersion:String):Boolean;
+
+function CreateQEMULauncher(const AName,AInstallPath:String):Boolean;
 
 {==============================================================================}
 {==============================================================================}
@@ -237,6 +249,7 @@ begin
   try
    {Create Content}
    WorkBuffer:='';
+   {$IFDEF WINDOWS}
    WorkBuffer:=WorkBuffer + '<?xml version="1.0"?>' + LineEnd;
    WorkBuffer:=WorkBuffer + '<CONFIG>' + LineEnd;
    WorkBuffer:=WorkBuffer + '  <EnvironmentOptions>' + LineEnd;
@@ -256,6 +269,152 @@ begin
    WorkBuffer:=WorkBuffer + '    </DebuggerFilename>' + LineEnd;
    WorkBuffer:=WorkBuffer + '  </EnvironmentOptions>' + LineEnd;
    WorkBuffer:=WorkBuffer + '</CONFIG>' + LineEnd;
+   {$ENDIF}
+   {$IFDEF LINUX}
+   WorkBuffer:=WorkBuffer + '<?xml version="1.0" encoding="UTF-8"?>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '<CONFIG>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '  <EnvironmentOptions>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <Version Value="' + ALazarusVersionNo + '" Lazarus="' + ALazarusVersion + '"/>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <LazarusDirectory Value="' + StripTrailingSlash(AInstallPath) + '">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </LazarusDirectory>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <CompilerFilename Value="' + StripTrailingSlash(ACompilerPath) + '/bin/fpc">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </CompilerFilename>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <FPCSourceDirectory Value="' + StripTrailingSlash(ACompilerPath) + '/source">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </FPCSourceDirectory>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <MakeFilename Value="make">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </MakeFilename>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <TestBuildDirectory Value="~/tmp/">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </TestBuildDirectory>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <Debugger Class="TGDBMIDebugger"/>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    <DebuggerFilename Value="gdb">' + LineEnd;
+   WorkBuffer:=WorkBuffer + '    </DebuggerFilename>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '  </EnvironmentOptions>' + LineEnd;
+   WorkBuffer:=WorkBuffer + '</CONFIG>' + LineEnd;
+   {$ENDIF}
+
+   {Set Size}
+   FileStream.Size:=Length(WorkBuffer);
+
+   {Write File}
+   FileStream.Position:=0;
+   FileStream.WriteBuffer(PChar(WorkBuffer)^,Length(WorkBuffer));
+
+   Result:=True;
+  finally
+   FileStream.Free;
+  end;
+ except
+  {}
+ end;
+end;
+
+{==============================================================================}
+
+function CreateConfig(const AName,AInstallPath,AProfilePath:String):Boolean;
+var
+ WorkBuffer:String;
+ FileStream:TFileStream;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(AName) = 0 then Exit;
+  if Length(AInstallPath) = 0 then Exit;
+  {if Length(AProfilePath) = 0 then Exit;} {Optional}
+
+  {Check File}
+  if FileExists(AInstallPath + AName) then Exit;
+
+  {Create File}
+  FileStream:=TFileStream.Create(AInstallPath + AName,fmCreate);
+  try
+   {Create Content}
+   WorkBuffer:='';
+   WorkBuffer:=WorkBuffer + '#--disabledocking' + LineEnd;
+   if Length(AProfilePath) <> 0 then
+    begin
+     WorkBuffer:=WorkBuffer + '--pcp=' + AProfilePath + LineEnd;
+    end;
+
+   {Set Size}
+   FileStream.Size:=Length(WorkBuffer);
+
+   {Write File}
+   FileStream.Position:=0;
+   FileStream.WriteBuffer(PChar(WorkBuffer)^,Length(WorkBuffer));
+
+   Result:=True;
+  finally
+   FileStream.Free;
+  end;
+ except
+  {}
+ end;
+end;
+
+{==============================================================================}
+
+function CreateBuildRTL(const AName,AInstallPath,ACompilerVersion:String):Boolean;
+var
+ WorkBuffer:String;
+ FileStream:TFileStream;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(AName) = 0 then Exit;
+  if Length(AInstallPath) = 0 then Exit;
+  if Length(ACompilerVersion) = 0 then Exit;
+
+  {Check File}
+  if FileExists(AInstallPath + AName) then Exit;
+
+  {Create File}
+  FileStream:=TFileStream.Create(AInstallPath + AName,fmCreate);
+  try
+   {Create Content}
+   WorkBuffer:='';
+   WorkBuffer:=WorkBuffer + '[BuildRTL]' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'CompilerVersion=' + ACompilerVersion + LineEnd;
+
+   {Set Size}
+   FileStream.Size:=Length(WorkBuffer);
+
+   {Write File}
+   FileStream.Position:=0;
+   FileStream.WriteBuffer(PChar(WorkBuffer)^,Length(WorkBuffer));
+
+   Result:=True;
+  finally
+   FileStream.Free;
+  end;
+ except
+  {}
+ end;
+end;
+
+{==============================================================================}
+
+function CreateQEMULauncher(const AName,AInstallPath:String):Boolean;
+var
+ WorkBuffer:String;
+ FileStream:TFileStream;
+begin
+ {}
+ Result:=False;
+ try
+  if Length(AName) = 0 then Exit;
+  if Length(AInstallPath) = 0 then Exit;
+
+  {Check File}
+  if FileExists(AInstallPath + AName) then Exit;
+
+  {Create File}
+  FileStream:=TFileStream.Create(AInstallPath + AName,fmCreate);
+  try
+   {Create Content}
+   WorkBuffer:='';
+   WorkBuffer:=WorkBuffer + '[QEMULauncher]' + LineEnd;
 
    {Set Size}
    FileStream.Size:=Length(WorkBuffer);
