@@ -1,7 +1,7 @@
 {
 Ultibo QEMU Launcher Tool.
 
-Copyright (C) 2021 - SoftOz Pty Ltd.
+Copyright (C) 2022 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -227,8 +227,8 @@ function ParameterExistsEx(const AParameter:String;APlus,AMinus:Boolean):Boolean
 function StartProgramEx(const ACommand,ADirectory:String;AWait,ANoShow:Boolean):Boolean;
 {$ENDIF}
 {$IFDEF LINUX}
-function StartProgramEx(const AExecutable:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
-function StartQEMUSystem(const ACommand,APidFile:String;AWait:Boolean):Boolean;
+function StartProgramEx(const AExecutable,ADirectory:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
+function StartQEMUSystem(const ACommand,ADirectory,APidFile:String;AWait:Boolean):Boolean;
 {$ENDIF}
 
 implementation
@@ -540,7 +540,7 @@ end;
 {$ENDIF}
 {==============================================================================}
 {$IFDEF LINUX}
-function StartProgramEx(const AExecutable:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
+function StartProgramEx(const AExecutable,ADirectory:String;AParams:TStrings;AWait,ATerminal:Boolean):Boolean;
 {Launch an external program with specified parameters and options}
 var
  Count:Integer;
@@ -571,6 +571,7 @@ begin
 
    {Add Executable}
    ProcessInfo.Executable:=AExecutable;
+   ProcessInfo.CurrentDirectory:=ADirectory;
 
    {Add Parameters}
    if AParams <> nil then
@@ -606,7 +607,7 @@ end;
 
 {==============================================================================}
 
-function StartQEMUSystem(const ACommand,APidFile:String;AWait:Boolean):Boolean;
+function StartQEMUSystem(const ACommand,ADirectory,APidFile:String;AWait:Boolean):Boolean;
 {Launch a QEMU session}
 {The qeum-system-??? executables require a new terminal session to be created which
  then launches them via a bash session. This means that the process id recorded is
@@ -674,6 +675,7 @@ begin
 
    {Create a bash session}
    ProcessInfo.Executable:='/bin/bash';
+   ProcessInfo.CurrentDirectory:=ADirectory;
    ProcessInfo.Parameters.Add('-c');
    ProcessInfo.Parameters.Add(ACommand + ' -pidfile "' + APidFile + '"');
 
@@ -1356,7 +1358,7 @@ begin
       Result:=StartProgramEx(Command,StripTrailingSlash(ProjectPath),True,False);
       {$ENDIF}
       {$IFDEF LINUX}
-      Result:=StartQEMUSystem(Command,PidFile,True);
+      Result:=StartQEMUSystem(Command,StripTrailingSlash(ProjectPath),PidFile,True);
       {$ENDIF}
      end
     else
@@ -1622,6 +1624,7 @@ procedure TfrmMain.txtProjectChange(Sender: TObject);
 begin
  {}
  FLaunch.Project:=txtProject.Text;
+ FLaunch.LoadProjectConfig;
 end;
 
 {==============================================================================}

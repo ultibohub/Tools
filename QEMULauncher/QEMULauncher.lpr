@@ -1,7 +1,7 @@
 {
 Ultibo QEMU Launcher Tool.
 
-Copyright (C) 2021 - SoftOz Pty Ltd.
+Copyright (C) 2022 - SoftOz Pty Ltd.
 
 Arch
 ====
