@@ -376,6 +376,14 @@ begin
    WorkBuffer:='';
    WorkBuffer:=WorkBuffer + '[BuildRTL]' + LineEnd;
    WorkBuffer:=WorkBuffer + 'CompilerVersion=' + ACompilerVersion + LineEnd;
+   {$IFDEF WINDOWS}
+   WorkBuffer:=WorkBuffer + 'CompilerPath=' + AInstallPath + 'fpc\' + ACompilerVersion + LineEnd;
+   WorkBuffer:=WorkBuffer + 'SourcePath=' + AInstallPath + 'fpc\' + ACompilerVersion + '\source' + LineEnd;
+   {$ENDIF}
+   {$IFDEF LINUX}
+   WorkBuffer:=WorkBuffer + 'CompilerPath=' + AInstallPath + 'fpc' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'SourcePath=' + AInstallPath + 'fpc' + '/source' + LineEnd;
+   {$ENDIF}
 
    {Set Size}
    FileStream.Size:=Length(WorkBuffer);
