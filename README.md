@@ -4,7 +4,7 @@ This repository contains a collection of tools and utilities for the Ultibo proj
 
 Some of these are already included in the Ultibo core installer package, see the readme in each folder for additional information.
 
-The source is available by downloading or cloning this repository, to download a zip file containing precompiled binaries for each tool go to the releases page https://github.com/ultibohub/Tools/releases
+The source is available by downloading or cloning this repository, to download a zip file containing precompiled binaries for each tool go to the [releases page](https://github.com/ultibohub/Tools/releases)
 
 
 ### Current tools and utilities:
@@ -26,4 +26,4 @@ The source is available by downloading or cloning this repository, to download a
 * UFnt2Unit - Utility to take the .ufnt files created by UFontCreator and turn them into pascal units for use in Ultibo projects
 
 
-Questions or suggestions about any of these tools should be posted in the Ultibo forum at https://ultibo.org/forum/index.php
+Questions or suggestions about any of these tools should be posted in the [Ultibo forum](https://ultibo.org/forum/index.php)
