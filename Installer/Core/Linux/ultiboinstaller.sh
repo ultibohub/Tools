@@ -520,7 +520,7 @@ mkdir -p $BASE/downloads
 # Download a minimal version of FPC stable
 echo "Downloading FPC minimal stable $FPC_STABLE"
 #cp $HOME/test/fpc-$FPC_STABLE.$CPU-linux.zip $BASE/downloads/fpc-$FPC_STABLE.$CPU-linux.zip
-download "$BASE/downloads/fpc-$FPC_STABLE.$CPU-linux.zip" $URL/Tools/releases/download/1.0.5/fpc-$FPC_STABLE.$CPU-linux.zip
+download "$BASE/downloads/fpc-$FPC_STABLE.$CPU-linux.zip" $URL/Tools/releases/download/1.0.6/fpc-$FPC_STABLE.$CPU-linux.zip
 exitFailure
 
 # Unzip FPC stable
