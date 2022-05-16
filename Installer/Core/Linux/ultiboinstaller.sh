@@ -47,7 +47,7 @@ esac
 FPC_BUILD=3.2.2
 FPC_BRANCH="ultibo-3.2.2"
 FPC_NONSTABLE=""
-LAZARUS_BUILD="2.2.0U"
+LAZARUS_BUILD="2.2.3U"
 LAZARUS_CONFIG="110"
 LAZARUS_BRANCH="ultibo-2.2" 
 
@@ -881,7 +881,7 @@ if [ "$LAZARUS" = "Y" ]; then
 
 	# Create a Lazarus startup file
 	STARTUPFILE="$BASE/lazarus.sh"
-    echo "#!/bin/bash" > $STARTUPFILE
+	echo "#!/bin/bash" > $STARTUPFILE
 	echo "export PATH=$BASE/fpc/bin:\$PATH" >> $STARTUPFILE
 	echo "export ULTIBO_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
 	echo "$BASE/lazarus" >> $STARTUPFILE
