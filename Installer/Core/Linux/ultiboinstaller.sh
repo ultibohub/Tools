@@ -881,7 +881,8 @@ if [ "$LAZARUS" = "Y" ]; then
 
 	# Create a Lazarus startup file
 	STARTUPFILE="$BASE/lazarus.sh"
-	echo "export PATH=$BASE/fpc/bin:\$PATH" > $STARTUPFILE
+    echo "#!/bin/bash" > $STARTUPFILE
+	echo "export PATH=$BASE/fpc/bin:\$PATH" >> $STARTUPFILE
 	echo "export ULTIBO_CONFIG_PATH=$BASE/fpc/bin" >> $STARTUPFILE
 	echo "$BASE/lazarus" >> $STARTUPFILE
 	chmod +x $STARTUPFILE
