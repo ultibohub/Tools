@@ -594,7 +594,10 @@ mv downloads/Core-$ULTIBO_BRANCH/source/__version.id $BASE/fpc/source/__version.
 mv downloads/Core-$ULTIBO_BRANCH/source/__firmware.id $BASE/fpc/source/__firmware.id
 mv downloads/Core-$ULTIBO_BRANCH/source/__buildrtl.bat $BASE/fpc/source/__buildrtl.bat
 mv downloads/Core-$ULTIBO_BRANCH/source/__buildrtl.sh $BASE/fpc/source/__buildrtl.sh
-mv downloads/Core-$ULTIBO_BRANCH/units $BASE/fpc/units
+mkdir -p $BASE/fpc/lib/fpc/$FPC_BUILD/units
+mv downloads/Core-$ULTIBO_BRANCH/units/armv6-ultibo $BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo
+mv downloads/Core-$ULTIBO_BRANCH/units/armv7-ultibo $BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo
+mv downloads/Core-$ULTIBO_BRANCH/units/armv8-ultibo $BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo
 mv downloads/Examples-master $BASE/examples
 if [ "$LAZARUS" = "Y" ]; then
 	rm -rf downloads/LazarusIDE-$LAZARUS_BRANCH/examples
@@ -707,13 +710,16 @@ if [ "$CPU" != "arm" ]; then
 	cp $BASE/fpc/lib/fpc/$FPC_BUILD/ppcrossarm $BASE/fpc/bin/ppcrossarm
 fi
 
+# Remove the default units folder for Ultibo RTL and Packages 
+rm -rf $BASE/fpc/lib/fpc/$FPC_BUILD/units/arm-ultibo
+
 # Building the Ultibo RTL
 # Ultibo RTL for ARMv7
 make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
 make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/units/armv7-ultibo/rtl
+make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl
 exitFailure
 
 # Packages for ARMv7
@@ -721,9 +727,9 @@ make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BIN
 exitFailure
 make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu$BASE/fpc/units/armv7-ultibo/rtl" FPC=$BASE/fpc/bin/fpc
+make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/units/armv7-ultibo/packages
+make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages
 exitFailure
 
 # Ultibo RTL for ARM6
@@ -731,7 +737,7 @@ make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINU
 exitFailure
 make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/units/armv6-ultibo/rtl
+make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/rtl
 exitFailure
 
 # Packages for ARMv6
@@ -739,9 +745,9 @@ make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINU
 exitFailure
 make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu$BASE/fpc/units/armv6-ultibo/rtl" FPC=$BASE/fpc/bin/fpc
+make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/rtl" FPC=$BASE/fpc/bin/fpc
 exitFailure
-make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/units/armv6-ultibo/packages
+make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/packages
 exitFailure
 
 # Create the Configuration files
@@ -758,10 +764,10 @@ echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI" >> $CONFIGFILE
 echo "-dBCM2708" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv6-ultibo/rtl" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv6-ultibo/packages" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv6-ultibo/lib" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv6-ultibo/lib/vc4" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv6-ultibo/lib/vc4" >> $CONFIGFILE
 
 # RPI2.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI2.CFG"
@@ -775,10 +781,10 @@ echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI2" >> $CONFIGFILE
 echo "-dBCM2709" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 
 # RPI3.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI3.CFG"
@@ -792,10 +798,10 @@ echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI3" >> $CONFIGFILE
 echo "-dBCM2710" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 
 # RPI4.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI4.CFG"
@@ -809,10 +815,10 @@ echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dRPI4" >> $CONFIGFILE
 echo "-dBCM2711" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
 
 # QEMUVPB.CFG
 CONFIGFILE="$BASE/fpc/bin/QEMUVPB.CFG"
@@ -825,9 +831,9 @@ echo "-CaEABIHF" >> $CONFIGFILE
 echo "-OoFASTMATH" >> $CONFIGFILE
 echo "-dQEMUVPB" >> $CONFIGFILE
 echo "-XParm-none-eabi-" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/rtl" >> $CONFIGFILE
-echo "-Fu$BASE/fpc/units/armv7-ultibo/packages" >> $CONFIGFILE
-echo "-Fl$BASE/fpc/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
 
 # Build Lazarus
 if [ "$LAZARUS" = "Y" ]; then

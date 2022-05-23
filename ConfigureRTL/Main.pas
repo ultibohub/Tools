@@ -70,7 +70,8 @@ uses
   LCLType,
   LMessages,
   SysUtils,
-  Classes;
+  Classes,
+  IniFiles;
 
 {==============================================================================}
 const
@@ -242,7 +243,21 @@ begin
   if Length(ALazarusVersionNo) = 0 then Exit;
 
   {Check File}
-  if FileExists(AInstallPath + AName) then Exit;
+  if FileExists(AInstallPath + AName) then
+   begin
+    {Check Backup}
+    if FileExists(AInstallPath + AName + '.bak') then
+     begin
+      {Delete Backup}
+      DeleteFile(AInstallPath + AName + '.bak')
+     end;
+
+    {Backup File}
+    if not RenameFile(AInstallPath + AName,AInstallPath + AName + '.bak') then Exit;
+
+    {Check File}
+    if FileExists(AInstallPath + AName) then Exit;
+   end;
 
   {Create File}
   FileStream:=TFileStream.Create(AInstallPath + AName,fmCreate);
@@ -357,6 +372,7 @@ end;
 function CreateBuildRTL(const AName,AInstallPath,ACompilerVersion:String):Boolean;
 var
  WorkBuffer:String;
+ IniFile:TIniFile;
  FileStream:TFileStream;
 begin
  {}
@@ -367,7 +383,22 @@ begin
   if Length(ACompilerVersion) = 0 then Exit;
 
   {Check File}
-  if FileExists(AInstallPath + AName) then Exit;
+  if FileExists(AInstallPath + AName) then
+   begin
+    IniFile:=TIniFile.Create(AInstallPath + AName);
+    try
+     {Check Compiler Version}
+     if IniFile.ReadString('BuildRTL','CompilerVersion','') = ACompilerVersion then Exit;
+
+     {Update Compiler Version}
+     IniFile.WriteString('BuildRTL','CompilerVersion',ACompilerVersion);
+
+     Result:=True;
+     Exit;
+    finally
+     IniFile.Free;
+    end;
+   end;
 
   {Create File}
   FileStream:=TFileStream.Create(AInstallPath + AName,fmCreate);

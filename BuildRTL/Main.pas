@@ -2842,7 +2842,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv6-ultibo/rtl' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
@@ -2886,7 +2886,7 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
-       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv6-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
@@ -2900,7 +2900,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv6-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv6-ultibo/packages' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
@@ -2951,7 +2951,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv7-ultibo/rtl' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
@@ -2995,7 +2995,7 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
-       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv7-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
@@ -3009,7 +3009,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv7-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv7-ultibo/packages' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
@@ -3062,7 +3062,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/rtl' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv8-ultibo/rtl' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
@@ -3108,7 +3108,7 @@ begin
        WorkBuffer:=WorkBuffer + '' + LineEnd;
        WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
-       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/rtl"';
+       WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv8-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
@@ -3122,7 +3122,7 @@ begin
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' INSTALL_PREFIX=' + StripTrailingSlash(CompilerPath);
-       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/units/armv8-ultibo/packages' + LineEnd;
+       WorkBuffer:=WorkBuffer + ' INSTALL_UNITDIR=' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv8-ultibo/packages' + LineEnd;
        WorkBuffer:=WorkBuffer + 'exitFailure' + LineEnd;
 
        Inc(Progress);
