@@ -392,6 +392,10 @@ begin
 
      {Update Compiler Version}
      IniFile.WriteString('BuildRTL','CompilerVersion',ACompilerVersion);
+     {$IFDEF WINDOWS}
+     IniFile.WriteString('BuildRTL','CompilerPath',AInstallPath + 'fpc\' + ACompilerVersion);
+     IniFile.WriteString('BuildRTL','SourcePath',AInstallPath + 'fpc\' + ACompilerVersion + '\source');
+     {$ENDIF}
 
      Result:=True;
      Exit;
