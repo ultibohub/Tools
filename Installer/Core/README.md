@@ -19,13 +19,13 @@ The script has been tested on a range of Linux distributions including Debian, U
 
 By default the script will build and install the current stable versions of FPC and Lazarus however if you prefer to use the main (trunk) or fixes branches you can specify that on the command line when launching the script.
 
-_To select the MAIN (trunk) branch use:
+_To select the MAIN (trunk) branch use:_
 
 ```
 ./ultiboinstaller.sh main
 ```
 
-_or for the FIXES branch use:
+_or for the FIXES branch use:_
 
 ```
 ./ultiboinstaller.sh fixes
