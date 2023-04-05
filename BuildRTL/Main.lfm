@@ -113,7 +113,7 @@ object frmMain: TfrmMain
       Top = 168
       Width = 716
       Anchors = [akTop, akLeft, akRight]
-      Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400, QEMU)'
+      Caption = 'ARMv7 (Raspberry Pi 2B/3B/3B+/3A+/4B/400/Zero2W, QEMU)'
       OnClick = chkARMv7Click
       TabOrder = 7
     end
@@ -123,7 +123,7 @@ object frmMain: TfrmMain
       Top = 189
       Width = 716
       Anchors = [akTop, akLeft, akRight]
-      Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400, QEMU) (Experimental Only)'
+      Caption = 'ARMv8 (Raspberry Pi 3B/3B+/3A+/4B/400/Zero2W, QEMU) (Experimental Only)'
       OnClick = chkARMv8Click
       TabOrder = 8
     end
