@@ -956,6 +956,10 @@ if [ "$LAZARUS" = "Y" ]; then
 	exitFailure
 	cp $BASE/downloads/Tools-$ULTIBO_BRANCH/BuildRTL/lib/$CPU-linux/BuildRTL $BASE/tools/BuildRTL
 
+	$BASE/lazbuild --os=linux --cpu=$CPU $BASE/downloads/Tools-$ULTIBO_BRANCH/FontBuilder/FontBuilder.lpi
+	exitFailure
+	cp $BASE/downloads/Tools-$ULTIBO_BRANCH/FontBuilder/lib/$CPU-linux/FontBuilder $BASE/tools/FontBuilder
+
 	# Create the BuildRTL.ini file
 	CONFIGFILE="$BASE/tools/BuildRTL.ini"
 	echo "[BuildRTL]" > $CONFIGFILE
