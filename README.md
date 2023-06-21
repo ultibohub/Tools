@@ -19,6 +19,8 @@ The source is available by downloading or cloning this repository, to download a
 
 * QEMULauncher - A tool to load an Ultibo project into a QEMU machine
 
+* Text2Bin - A utility to turn plain text in the form of hex values seperated by spaces into a binary output file
+
 * TimezoneBuilder - A tool to compile world timezone information into a format suitable for the Ultibo timezone unit
 
 * UFontCreator - A tool to convert any Windows font into a file describing it as a bitmap of fixed width and height
