@@ -1,0 +1,89 @@
+object frmMain: TfrmMain
+  Left = 522
+  Height = 607
+  Top = 225
+  Width = 599
+  Caption = 'Text 2 Binary Converter'
+  ClientHeight = 607
+  ClientWidth = 599
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnHide = FormHide
+  OnShow = FormShow
+  LCLVersion = '2.0.2.0'
+  object memoMain: TMemo
+    Left = 0
+    Height = 526
+    Top = 0
+    Width = 599
+    Align = alClient
+    TabOrder = 0
+  end
+  object statusMain: TStatusBar
+    Left = 0
+    Height = 23
+    Top = 584
+    Width = 599
+    Panels = <>
+  end
+  object panelMain: TPanel
+    Left = 0
+    Height = 58
+    Top = 526
+    Width = 599
+    Align = alBottom
+    BevelOuter = bvNone
+    ClientHeight = 58
+    ClientWidth = 599
+    TabOrder = 2
+    object buttonClose: TButton
+      Left = 512
+      Height = 25
+      Top = 16
+      Width = 75
+      Anchors = [akRight, akBottom]
+      Caption = 'Close'
+      OnClick = buttonCloseClick
+      TabOrder = 0
+    end
+    object buttonConvert: TButton
+      Left = 427
+      Height = 25
+      Top = 16
+      Width = 75
+      Anchors = [akRight, akBottom]
+      Caption = 'Convert'
+      OnClick = buttonConvertClick
+      TabOrder = 1
+    end
+    object buttonOutput: TButton
+      Left = 388
+      Height = 25
+      Top = 16
+      Width = 25
+      Anchors = [akRight, akBottom]
+      Caption = '...'
+      OnClick = buttonOutputClick
+      TabOrder = 2
+    end
+    object editOutput: TLabeledEdit
+      Left = 80
+      Height = 23
+      Top = 17
+      Width = 302
+      Anchors = [akLeft, akRight, akBottom]
+      EditLabel.Height = 15
+      EditLabel.Width = 59
+      EditLabel.Caption = 'Output File'
+      EditLabel.ParentColor = False
+      LabelPosition = lpLeft
+      TabOrder = 3
+      OnChange = editOutputChange
+    end
+  end
+  object saveMain: TSaveDialog
+    left = 127
+    top = 441
+  end
+end
