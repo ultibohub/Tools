@@ -125,7 +125,7 @@ begin
             Inc(Offset)
           else if Source[Offset] = #13 then
             Inc(Offset)
-          else if Source[Offset] in ['0'..'9','A'..'F'] then
+          else if Source[Offset] in ['0'..'9','a'..'f','A'..'F'] then
           begin
             Value:=Value + Source[Offset];
             Inc(Offset);
