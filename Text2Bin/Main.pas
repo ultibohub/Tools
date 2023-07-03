@@ -173,8 +173,75 @@ end;
 {==============================================================================}
 
 procedure TfrmMain.FormShow(Sender: TObject);
+var
+ Scale:Double;
 begin
   editOutput.Text:=FOutput;
+
+  // Adjust Controls
+  if editOutput.Height > buttonOutput.Height then
+  begin
+    buttonOutput.Height:=editOutput.Height;
+    buttonOutput.Width:=editOutput.Height;
+    buttonOutput.Top:=editOutput.Top + ((editOutput.Height - buttonOutput.Height) div 2);
+  end
+  else
+  begin
+    buttonOutput.Height:=editOutput.Height + 2;
+    buttonOutput.Width:=editOutput.Height + 2;
+    buttonOutput.Top:=editOutput.Top - 1;
+  end;
+
+  if editOutput.Height > buttonConvert.Height then
+   begin
+    buttonConvert.Height:=editOutput.Height;
+    buttonConvert.Top:=editOutput.Top + ((editOutput.Height - buttonConvert.Height) div 2);
+   end
+  else
+   begin
+    buttonConvert.Height:=editOutput.Height + 2;
+    buttonConvert.Top:=editOutput.Top - 1;
+   end;
+
+  if editOutput.Height > buttonClose.Height then
+   begin
+    buttonClose.Height:=editOutput.Height;
+    buttonClose.Top:=editOutput.Top + ((editOutput.Height - buttonClose.Height) div 2);
+   end
+  else
+   begin
+    buttonClose.Height:=editOutput.Height + 2;
+    buttonClose.Top:=editOutput.Top - 1;
+   end;
+
+  // Check PixelsPerInch
+  if PixelsPerInch > 96 then
+  begin
+    // Calculate Scale
+    Scale:=(PixelsPerInch / 96);
+
+    // Disable Anchors}
+    editOutput.Anchors:=[akLeft,akTop];
+    buttonOutput.Anchors:=[akLeft,akTop];
+    buttonConvert.Anchors:=[akLeft,akTop];
+    buttonClose.Anchors:=[akLeft,akTop];
+
+    // Resize Form
+    Width:=Trunc(Width * Scale);
+    Height:=Trunc(Height * Scale);
+
+    // Move Controls
+    editOutput.Left:=panelMain.Width - Trunc(570 * Scale); {650 - 80 = 570}
+    buttonOutput.Left:=panelMain.Width - Trunc(261 * Scale); {650 - 389 = 261}
+    buttonConvert.Left:=panelMain.Width - Trunc(222 * Scale); {650 - 428 = 222}
+    buttonClose.Left:=panelMain.Width - Trunc(137 * Scale); {650 - 513 = 137}
+
+    // Enable Anchors
+    editOutput.Anchors:=[akLeft,akRight,akBottom];
+    buttonOutput.Anchors:=[akRight,akBottom];
+    buttonConvert.Anchors:=[akRight,akBottom];
+    buttonClose.Anchors:=[akRight,akBottom];
+  end;
 end;
 
 {==============================================================================}

@@ -2,21 +2,22 @@ object frmMain: TfrmMain
   Left = 522
   Height = 607
   Top = 225
-  Width = 599
+  Width = 650
   Caption = 'Text 2 Binary Converter'
   ClientHeight = 607
-  ClientWidth = 599
+  ClientWidth = 650
   OnClose = FormClose
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   OnHide = FormHide
   OnShow = FormShow
+  Position = poScreenCenter
   LCLVersion = '2.0.2.0'
   object memoMain: TMemo
     Left = 0
     Height = 526
     Top = 0
-    Width = 599
+    Width = 650
     Align = alClient
     TabOrder = 0
   end
@@ -24,21 +25,21 @@ object frmMain: TfrmMain
     Left = 0
     Height = 23
     Top = 584
-    Width = 599
+    Width = 650
     Panels = <>
   end
   object panelMain: TPanel
     Left = 0
     Height = 58
     Top = 526
-    Width = 599
+    Width = 650
     Align = alBottom
     BevelOuter = bvNone
     ClientHeight = 58
-    ClientWidth = 599
+    ClientWidth = 650
     TabOrder = 2
     object buttonClose: TButton
-      Left = 512
+      Left = 563
       Height = 25
       Top = 16
       Width = 75
@@ -48,7 +49,7 @@ object frmMain: TfrmMain
       TabOrder = 0
     end
     object buttonConvert: TButton
-      Left = 427
+      Left = 478
       Height = 25
       Top = 16
       Width = 75
@@ -58,7 +59,7 @@ object frmMain: TfrmMain
       TabOrder = 1
     end
     object buttonOutput: TButton
-      Left = 388
+      Left = 439
       Height = 25
       Top = 16
       Width = 25
@@ -68,10 +69,10 @@ object frmMain: TfrmMain
       TabOrder = 2
     end
     object editOutput: TLabeledEdit
-      Left = 80
+      Left = 104
       Height = 23
       Top = 17
-      Width = 302
+      Width = 329
       Anchors = [akLeft, akRight, akBottom]
       EditLabel.Height = 15
       EditLabel.Width = 59
