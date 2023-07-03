@@ -63,7 +63,7 @@ if [ $# -ge 1 ]; then
 			FPC_BUILD=3.3.1
 			FPC_BRANCH="ultibo"
 			FPC_NONSTABLE="MAIN"
-			LAZARUS_BUILD="2.3.0U"
+			LAZARUS_BUILD="3.99U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo"
 			;;
@@ -72,9 +72,9 @@ if [ $# -ge 1 ]; then
 			FPC_BUILD=3.2.3
 			FPC_BRANCH="ultibo-3.2"
 			FPC_NONSTABLE="FIXES"
-			LAZARUS_BUILD="2.2.7U"
+			LAZARUS_BUILD="3.0URC1"
 			LAZARUS_CONFIG="110"
-			LAZARUS_BRANCH="ultibo-2.2"
+			LAZARUS_BRANCH="ultibo-3.0"
 			;;
 	esac
 fi
