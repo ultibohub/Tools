@@ -2358,7 +2358,7 @@ begin
    {Add Header}
    WorkBuffer:='';
    WorkBuffer:=WorkBuffer + '@echo off' + LineEnd;
-   WorkBuffer:=WorkBuffer + 'set path=' + PathPrefix + StripTrailingSlash(CompilerPath) + '\bin\i386-win32' + LineEnd;
+   WorkBuffer:=WorkBuffer + 'set path=' + PathPrefix + StripTrailingSlash(CompilerPath) + '\bin\i386-win32;' + LineEnd;
    WorkBuffer:=WorkBuffer + '' + LineEnd;
 
    {Add Start}
