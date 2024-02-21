@@ -31,14 +31,14 @@ echo
 read -r -p "Continue (y/n)? " REPLY
 
 case $REPLY in
-	[yY][eE][sS]|[yY]) 
+	[yY][eE][sS]|[yY])
 		echo
 		;;
 	*)
 		# Exit the script if the user does not type "y" or "Y"
-		echo 
+		echo
 		echo "Exiting, nothing installed."
-		echo 
+		echo
 		exit 1
 		;;
 esac
@@ -49,15 +49,16 @@ FPC_BRANCH="ultibo-3.2.2"
 FPC_NONSTABLE=""
 LAZARUS_BUILD="3.0U"
 LAZARUS_CONFIG="110"
-LAZARUS_BRANCH="ultibo-3.0.0" 
+LAZARUS_BRANCH="ultibo-3.0.0"
+NOAARCH64=""
 
 # The Git branch of Ultibo Core we are building
 ULTIBO_BRANCH="master"
 #ULTIBO_BRANCH="next" # Used only during beta testing
 
-# Check for MAIN or FIXES parameter passed on command line
+# Check for MAIN or FIXES or NOAARCH64 parameter passed on command line
 if [ $# -ge 1 ]; then
-	case $1 in 
+	case $1 in
 		[mM][aA][iI][nN])
 			# Build the main (trunk) branch
 			FPC_BUILD=3.3.1
@@ -76,6 +77,36 @@ if [ $# -ge 1 ]; then
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo-3.0"
 			;;
+		[nN][oO][aA][aA][rR][cC][hH][6][4])
+			# Dont build aarch64 support
+			NOAARCH64="Y"
+			;;
+	esac
+fi
+if [ $# -ge 2 ]; then
+	case $2 in
+		[mM][aA][iI][nN])
+			# Build the main (trunk) branch
+			FPC_BUILD=3.3.1
+			FPC_BRANCH="ultibo"
+			FPC_NONSTABLE="MAIN"
+			LAZARUS_BUILD="3.99U"
+			LAZARUS_CONFIG="110"
+			LAZARUS_BRANCH="ultibo"
+			;;
+		[fF][iI][xX][eE][sS])
+			# Build the fixes branch
+			FPC_BUILD=3.2.3
+			FPC_BRANCH="ultibo-3.2"
+			FPC_NONSTABLE="FIXES"
+			LAZARUS_BUILD="3.1U"
+			LAZARUS_CONFIG="110"
+			LAZARUS_BRANCH="ultibo-3.0"
+			;;
+		[nN][oO][aA][aA][rR][cC][hH][6][4])
+			# Dont build aarch64 support
+			NOAARCH64="Y"
+			;;
 	esac
 fi
 
@@ -93,20 +124,20 @@ if [ "$FPC_NONSTABLE" != "" ]; then
 	read -r -p "Continue (y/n)? " REPLY
 
 	case $REPLY in
-		[yY][eE][sS]|[yY]) 
+		[yY][eE][sS]|[yY])
 			echo
 			;;
 		*)
 			# Exit the script if the user does not type "y" or "Y"
-			echo 
+			echo
 			echo "Exiting, nothing installed."
-			echo 
+			echo
 			exit 1
 			;;
 	esac
 fi
 
-# Prevent this script from running as root 
+# Prevent this script from running as root
 if [ "$(id -u)" = "0" ]; then
 	echo "This script should not be run as root"
 	exit 1
@@ -117,7 +148,7 @@ echo
 read -r -p "Do you want to build and install the Lazarus IDE (y/n)? " REPLY
 
 case $REPLY in
-	[yY][eE][sS]|[yY]) 
+	[yY][eE][sS]|[yY])
 		LAZARUS="Y"
 		echo
 		;;
@@ -132,7 +163,7 @@ echo "Free Pascal and Lazarus (Ultibo edition) prerequisites"
 echo "------------------------------------------------------"
 echo "Installing and building Free Pascal requires several tools "
 echo "from the build essentials package including make, ld and as"
-echo "as well as the unzip utility." 
+echo "as well as the unzip utility."
 echo
 echo "These can be installed on Debian based distributions using:"
 echo
@@ -142,74 +173,83 @@ if [ "$LAZARUS" = "Y" ]; then
 	echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
 	echo "can be installed on Debian based distributions by using:"
 	echo
-	echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\" 
+	echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\"
 	echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
 	echo "  libghc-x11-dev"
 	echo
 fi
 echo "Cross compiling Ultibo applications from Linux requires the"
-echo "arm-none-eabi build of the binutils package, this can be"
-echo "installed on Debian based distributions using:"
-echo
-echo "sudo apt-get install binutils-arm-none-eabi"
+if [ "$NOAARCH64" = "Y" ]; then
+	echo "arm-none-eabi build of the binutils package, this can be"
+	echo "installed on Debian based distributions using:"
+	echo
+	echo "sudo apt-get install binutils-arm-none-eabi"
+else
+	echo "arm-none-eabi and aarch64-linux-gnu builds of the binutils"
+	echo "package, these can be installed on Debian based distributions"
+	echo "using:"
+	echo
+	echo "sudo apt-get install binutils-arm-none-eabi \\"
+	echo "  binutils-aarch64-linux-gnu"
+fi
 echo
 echo -n "Press return to check for these prerequisites"
 read CHOICE
 echo
 
-# function require(program) 
+# function require(program)
 function require() {
 	if ! type "$1" > /dev/null; then
-		echo 
+		echo
 		echo "An error occurred"
-		echo 
+		echo
 		echo "This installation requires the package $1 but it was not found on your system"
-		echo 
+		echo
 		echo "On Debian based distributions type the following to install it"
-		echo 
+		echo
 		echo "sudo apt-get install $2"
-		echo 
+		echo
 		echo "Then re-run the installation"
-		echo 
+		echo
 		echo "For other distributions refer to the documentation for your"
 		echo "package manager"
-		echo 
+		echo
 		exit 1
 	fi
 	echo "$1 found"
 }
 
-# Require the following programs 
+# Require the following programs
 require "make" "build-essential"
 require "gdb" "gdb-minimal"
 require "unzip" "unzip"
 
-# function requirePackage(package) 
+# function requirePackage(package)
 function requirePackage() {
 	INSTALLED=$(dpkg-query -W --showformat='${Status}\n' $1 2> /dev/null | grep "install ok installed")
 	if [ "$INSTALLED" = "" ]; then
 		echo "$1 not found"
-		echo 
+		echo
 		echo "An error occurred"
-		echo 
+		echo
 		echo "This installation requires the package $1 but it was not found on your system"
-		echo 
+		echo
 		echo "On Debian based distributions type the following to install it"
-		echo 
+		echo
 		echo "sudo apt-get install $1"
-		echo 
+		echo
 		echo "Then re-run the installation"
-		echo 
+		echo
 		echo "For other distributions refer to the documentation for your"
-        echo "package manager"
-		echo 
+		echo "package manager"
+		echo
 		exit 1
-	fi	
+	fi
 	echo "$1 found"
 }
 
 if [ "$LAZARUS" = "Y" ]; then
-	# Require the following packages 
+	# Require the following packages
 	if type "dpkg-query" > /dev/null; then
 		requirePackage "libgtk2.0-dev"
 		requirePackage "libcairo2-dev"
@@ -220,12 +260,19 @@ if [ "$LAZARUS" = "Y" ]; then
 	fi
 fi
 
-# Require the following programs 
+# Require the following programs
 require "arm-none-eabi-as" "binutils-arm-none-eabi"
 require "arm-none-eabi-ld" "binutils-arm-none-eabi"
 require "arm-none-eabi-objcopy" "binutils-arm-none-eabi"
 
-sleep 2s
+if [ "$NOAARCH64" != "Y" ]; then
+	# And the following for building aarch64 applications
+	require "aarch64-linux-gnu-as" "binutils-aarch64-linux-gnu"
+	require "aarch64-linux-gnu-ld" "binutils-aarch64-linux-gnu"
+	require "aarch64-linux-gnu-objcopy" "binutils-aarch64-linux-gnu"
+fi
+
+sleep 4s
 
 # function download(url, output)
 function download() {
@@ -293,7 +340,7 @@ while true; do
 	# Ask for an install location
 	echo "Enter an installation folder or press return to"
 	echo "accept the default install location"
-	echo 
+	echo
 	echo -n "[$BASE]: "
 		read CHOICE
 	echo
@@ -322,10 +369,10 @@ while true; do
 	# Confirm their choice
 	echo -n "Continue? (y,n): "
 	read CHOICE
-	echo 
+	echo
 
 	case $CHOICE in
-		[yY][eE][sS]|[yY]) 
+		[yY][eE][sS]|[yY])
 			;;
 		*)
 			echo
@@ -341,7 +388,7 @@ while true; do
 		echo -n "Remove the entire folder and overwrite? (y,n): "
 		read CHOICE
 		case $CHOICE in
-			[yY][eE][sS]|[yY]) 
+			[yY][eE][sS]|[yY])
 				echo
 				rm -rf $EXPAND
 				;;
@@ -369,7 +416,7 @@ if [ "$LAZARUS" = "Y" ]; then
 			# Ask for a profile location
 			echo "Enter a folder for the Lazarus profile or press return"
 			echo "to accept the default profile location"
-			echo 
+			echo
 			echo -n "[$PROFILE]: "
 				read CHOICE
 			echo
@@ -398,10 +445,10 @@ if [ "$LAZARUS" = "Y" ]; then
 			# Confirm their choice
 			echo -n "Continue? (y,n): "
 			read CHOICE
-			echo 
+			echo
 
 			case $CHOICE in
-				[yY][eE][sS]|[yY]) 
+				[yY][eE][sS]|[yY])
 					;;
 				*)
 					echo
@@ -415,7 +462,7 @@ if [ "$LAZARUS" = "Y" ]; then
 				echo -n "Remove the entire folder and overwrite? (y,n): "
 				read CHOICE
 				case $CHOICE in
-					[yY][eE][sS]|[yY]) 
+					[yY][eE][sS]|[yY])
 						echo
 						rm -rf $UPDATE
 						;;
@@ -434,12 +481,12 @@ if [ "$LAZARUS" = "Y" ]; then
 	fi
 
 	# Ask for permission to create a local application shortcut
-	echo 
+	echo
 	echo "After install do you want a shortcut created in:"
 	read -r -p "$HOME/.local/share/applications (y/n)? " REPLY
 
 	case $REPLY in
-		[yY][eE][sS]|[yY]) 
+		[yY][eE][sS]|[yY])
 			SHORTCUT="Y"
 			echo
 			;;
@@ -455,7 +502,7 @@ echo
 read -r -p "Do you want to build the Hello World examples (y/n)? " REPLY
 
 case $REPLY in
-	[yY][eE][sS]|[yY]) 
+	[yY][eE][sS]|[yY])
 		EXAMPLES="Y"
 		echo
 		;;
@@ -514,7 +561,7 @@ if [ "$CPU" = "aarch64" ]; then
 	COMPILER="ppca64"
 fi
 
-# Download from GitHub 
+# Download from GitHub
 URL=https://github.com/ultibohub
 
 # Download into downloads folder
@@ -618,7 +665,7 @@ download "$BASE/fpc/source/__firmware.id" $FIRMWARE_ID
 # Read the firmware id into the variable
 FIRMWARE_ID=$(<$BASE/fpc/source/__firmware.id)
 
-# Download firmware from GitHub 
+# Download firmware from GitHub
 FIRMWARE_URL=https://github.com/raspberrypi/firmware/raw/$FIRMWARE_ID/boot
 
 # Download into firmware folders
@@ -699,7 +746,7 @@ $BASE/fpc/bin/fpcmkcfg -p -d basepath=$BASE/fpc/lib/fpc/$FPC_BUILD -o $BASE/fpc/
 export ULTIBO_CONFIG_PATH=$BASE/fpc/bin
 export PATH=$ULTIBO_CONFIG_PATH:$OLDPATH
 
-# Check if cross compiler required
+# Check if 32-bit cross compiler required
 if [ "$CPU" != "arm" ]; then
 	# Build the FPC ARM Cross Compiler
 	make distclean OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCOPT="-dFPC_ARMHF" CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/$COMPILER
@@ -713,10 +760,49 @@ if [ "$CPU" != "arm" ]; then
 	cp $BASE/fpc/lib/fpc/$FPC_BUILD/ppcrossarm $BASE/fpc/bin/ppcrossarm
 fi
 
-# Remove the default units folder for Ultibo RTL and Packages 
+# Remove the default units folder for Ultibo RTL and Packages
 rm -rf $BASE/fpc/lib/fpc/$FPC_BUILD/units/arm-ultibo
 
+# Check if 64-bit cross compiler required
+if [ "$NOAARCH64" != "Y" ]; then
+	if [ "$CPU" != "aarch64" ]; then
+		# Build the FPC AARCH64 Cross Compiler
+		make distclean OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/$COMPILER
+		exitFailure
+		make all OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/$COMPILER
+		exitFailure
+		make crossinstall BINUTILSPREFIX=aarch64-linux-gnu- CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 FPC=$BASE/fpc/bin/$COMPILER INSTALL_PREFIX=$BASE/fpc
+		exitFailure
+
+		# Copy the cross compiler to the bin directory
+		cp $BASE/fpc/lib/fpc/$FPC_BUILD/ppcrossa64 $BASE/fpc/bin/ppcrossa64
+	fi
+fi
+
+# Remove the default units folder for Ultibo RTL and Packages
+rm -rf $BASE/fpc/lib/fpc/$FPC_BUILD/units/aarch64-ultibo
+
 # Building the Ultibo RTL
+if [ "$NOAARCH64" != "Y" ]; then
+	# Ultibo RTL for ARMv8
+	make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
+	exitFailure
+	make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
+	exitFailure
+	make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/rtl
+	exitFailure
+
+	# Packages for ARMv8
+	make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
+	exitFailure
+	make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
+	exitFailure
+	make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/rtl" FPC=$BASE/fpc/bin/fpc
+	exitFailure
+	make packages_install CROSSINSTALL=1 BINUTILSPREFIX=aarch64-linux-gnu- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8 FPC=$BASE/fpc/bin/fpc INSTALL_PREFIX=$BASE/fpc INSTALL_UNITDIR=$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/packages
+	exitFailure
+fi
+
 # Ultibo RTL for ARMv7
 make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi- FPCFPMAKE=$BASE/fpc/bin/fpc CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" FPC=$BASE/fpc/bin/fpc
 exitFailure
@@ -794,6 +880,7 @@ CONFIGFILE="$BASE/fpc/bin/RPI3.CFG"
 echo "#" > $CONFIGFILE
 echo "# Raspberry Pi 3B/3B+/3A+/CM3/Zero2W specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
+echo "#IFDEF CPUARM" >> $CONFIGFILE
 echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
@@ -805,12 +892,25 @@ echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
+echo "#IFDEF CPUAARCH64" >> $CONFIGFILE
+echo "-CfVFP" >> $CONFIGFILE
+echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI3" >> $CONFIGFILE
+echo "-dBCM2710" >> $CONFIGFILE
+echo "-XPaarch64-linux-gnu-" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/lib/vc4" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
 
 # RPI4.CFG
 CONFIGFILE="$BASE/fpc/bin/RPI4.CFG"
 echo "#" > $CONFIGFILE
 echo "# Raspberry Pi 4B/400/CM4 specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
+echo "#IFDEF CPUARM" >> $CONFIGFILE
 echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
@@ -822,12 +922,25 @@ echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib/vc4" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
+echo "#IFDEF CPUAARCH64" >> $CONFIGFILE
+echo "-CfVFP" >> $CONFIGFILE
+echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dRPI4" >> $CONFIGFILE
+echo "-dBCM2711" >> $CONFIGFILE
+echo "-XPaarch64-linux-gnu-" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/lib" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/lib/vc4" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
 
 # QEMUVPB.CFG
 CONFIGFILE="$BASE/fpc/bin/QEMUVPB.CFG"
 echo "#" > $CONFIGFILE
 echo "# QEMU VersatilePB specific config file" >> $CONFIGFILE
 echo "#" >> $CONFIGFILE
+echo "#IFDEF CPUARM" >> $CONFIGFILE
 echo "-CfVFPV3" >> $CONFIGFILE
 echo "-CIARM" >> $CONFIGFILE
 echo "-CaEABIHF" >> $CONFIGFILE
@@ -837,6 +950,16 @@ echo "-XParm-none-eabi-" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/rtl" >> $CONFIGFILE
 echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/packages" >> $CONFIGFILE
 echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv7-ultibo/lib" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
+echo "#IFDEF CPUAARCH64" >> $CONFIGFILE
+echo "-CfVFP" >> $CONFIGFILE
+echo "-OoFASTMATH" >> $CONFIGFILE
+echo "-dQEMUVPB" >> $CONFIGFILE
+echo "-XPaarch64-linux-gnu-" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/rtl" >> $CONFIGFILE
+echo "-Fu$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/packages" >> $CONFIGFILE
+echo "-Fl$BASE/fpc/lib/fpc/$FPC_BUILD/units/armv8-ultibo/lib" >> $CONFIGFILE
+echo "#ENDIF" >> $CONFIGFILE
 
 # Build Lazarus
 if [ "$LAZARUS" = "Y" ]; then
@@ -968,6 +1091,9 @@ if [ "$LAZARUS" = "Y" ]; then
 	CONFIGFILE="$BASE/tools/BuildRTL.ini"
 	echo "[BuildRTL]" > $CONFIGFILE
 	echo "CompilerVersion=$FPC_BUILD" >> $CONFIGFILE
+	if [ "$NOAARCH64" = "Y" ]; then
+		echo "PlatformARMv8=0" >> $CONFIGFILE
+	fi
 
 	# Create the QEMULauncher.ini file
 	CONFIGFILE="$BASE/tools/QEMULauncher.ini"
@@ -1000,13 +1126,13 @@ if [ "$EXAMPLES" = "Y" ]; then
 	echo "Building Hello World for RPi4"
 	cd $BASE/examples/01-HelloWorld/RPi4
 	$BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpRPI4B @$BASE/fpc/bin/RPI4.CFG -O2 HelloWorld.lpr
-	
+
 	echo
 	echo "Building Hello World for QEMU"
 	cd $BASE/examples/01-HelloWorld/QEMU
 	$BASE/fpc/bin/fpc -B -Tultibo -Parm -CpARMV7A -WpQEMUVPB @$BASE/fpc/bin/QEMUVPB.CFG -O2 HelloWorld.lpr
 
-	cd $BASE  
+	cd $BASE
 fi
 
 # Delete the temporary version of fpc stable
@@ -1032,4 +1158,4 @@ else
 	echo "  $BASE/fpc/bin/fpc"
 fi
 echo "from the command line"
-echo 
+echo
