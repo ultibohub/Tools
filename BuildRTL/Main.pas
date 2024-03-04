@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2022 - SoftOz Pty Ltd.
+Copyright (C) 2024 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -64,6 +64,9 @@ RTL Builder
  ARMCompiler=
  AARCH64Compiler=
 
+ ARMBinUtilsPrefix=
+ AARCH64BinUtilsPrefix=
+
  BuildRTL=
  BuildPackages=
 
@@ -102,6 +105,12 @@ RTL Builder
 
  AARCH64Compiler - The name of the Free Pascal AARCH64 Compiler or Cross Compiler (Default: <Blank>)
 
+
+ ARMBinUtilsPrefix - The prefix for the binutils ARM binaries (ld, as) (Default Windows: arm-ultibo-)
+                                                                       (        Linux: arm-none-eabi-)
+
+ AARCH64BinUtilsPrefix - The prefix for the binutils AARCH64 binaries (ld, as) (Default Windows: aarch64-ultibo-)
+                                                                               (        Linux: aarch64-linux-gnu-)
 
  BuildRTL - Enable or disable building the RTL (0=Disable / 1=Enable) (Default: 1)
 
@@ -302,6 +311,9 @@ type
 
     ARMCompiler:String;
     AARCH64Compiler:String;
+
+    ARMBinUtilsPrefix:String;
+    AARCH64BinUtilsPrefix:String;
 
     BuildRTL:Boolean;
     BuildPackages:Boolean;
@@ -947,6 +959,24 @@ begin
  {The names of the AARCH64 compiler or cross compiler}
  AARCH64Compiler:='';
 
+ {$IFDEF WINDOWS}
+ {The prefix for the binutils ARM binaries (ld, as)}
+ ARMBinUtilsPrefix:=''; {Defaults to arm-ultibo-}
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {The prefix for the binutils ARM binaries (ld, as)}
+ ARMBinUtilsPrefix:='arm-none-eabi-';
+ {$ENDIF}
+
+ {$IFDEF WINDOWS}
+ {The prefix for the binutils AARCH64 binaries (ld, as)}
+ AARCH64BinUtilsPrefix:=''; {Defaults to aarch64-ultibo-}
+ {$ENDIF}
+ {$IFDEF LINUX}
+ {The prefix for the binutils AARCH64 binaries (ld, as)}
+ AARCH64BinUtilsPrefix:='aarch64-linux-gnu-';
+ {$ENDIF}
+
  BuildRTL:=True;
  BuildPackages:=True;
 
@@ -963,12 +993,6 @@ begin
  SaveSettings:=True;
 
  LoadConfig;
-
- {$IFDEF LINUX}
- {Temporarily disable ARMv8 RTL build for Linux}
- PlatformARMv8:=False;
- chkARMv8.Visible:=False;
- {$ENDIF}
 end;
 
 {==============================================================================}
@@ -1308,6 +1332,19 @@ begin
         LogOutput('');
        end;
 
+      {Add ARM binutils prefix}
+      if Length(ARMBinUtilsPrefix) <> 0 then
+       begin
+        LogOutput(' ARM binutils prefix is ' + ARMBinUtilsPrefix);
+        LogOutput('');
+       end;
+      {Add AARCH64 binutils prefix}
+      if Length(AARCH64BinUtilsPrefix) <> 0 then
+       begin
+        LogOutput(' AARCH64 binutils prefix is ' + AARCH64BinUtilsPrefix);
+        LogOutput('');
+       end;
+
       {Create Build File}
       LogOutput(' Creating Build Script');
       LogOutput('');
@@ -1428,6 +1465,19 @@ begin
     if Length(AARCH64Compiler) <> 0 then
      begin
       LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+      LogOutput('');
+     end;
+
+    {Add ARM binutils prefix}
+    if Length(ARMBinUtilsPrefix) <> 0 then
+     begin
+      LogOutput(' ARM binutils prefix is ' + ARMBinUtilsPrefix);
+      LogOutput('');
+     end;
+    {Add AARCH64 binutils prefix}
+    if Length(AARCH64BinUtilsPrefix) <> 0 then
+     begin
+      LogOutput(' AARCH64 binutils prefix is ' + AARCH64BinUtilsPrefix);
       LogOutput('');
      end;
 
@@ -1584,6 +1634,19 @@ begin
       LogOutput('');
      end;
 
+    {Add ARM binutils prefix}
+    if Length(ARMBinUtilsPrefix) <> 0 then
+     begin
+      LogOutput(' ARM binutils prefix is ' + ARMBinUtilsPrefix);
+      LogOutput('');
+     end;
+    {Add AARCH64 binutils prefix}
+    if Length(AARCH64BinUtilsPrefix) <> 0 then
+     begin
+      LogOutput(' AARCH64 binutils prefix is ' + AARCH64BinUtilsPrefix);
+      LogOutput('');
+     end;
+
     {Create Build File}
     LogOutput(' Creating Build Script');
     LogOutput('');
@@ -1663,6 +1726,19 @@ begin
   if Length(AARCH64Compiler) <> 0 then
    begin
     LogOutput(' AARCH64 Compiler is ' + AARCH64Compiler);
+    LogOutput('');
+   end;
+
+  {Add ARM binutils prefix}
+  if Length(ARMBinUtilsPrefix) <> 0 then
+   begin
+    LogOutput(' ARM binutils prefix is ' + ARMBinUtilsPrefix);
+    LogOutput('');
+   end;
+  {Add AARCH64 binutils prefix}
+  if Length(AARCH64BinUtilsPrefix) <> 0 then
+   begin
+    LogOutput(' AARCH64 binutils prefix is ' + AARCH64BinUtilsPrefix);
     LogOutput('');
    end;
 
@@ -1816,6 +1892,11 @@ begin
      ARMCompiler:=IniFile.ReadString(Section,'ARMCompiler',ARMCompiler);
      {Get AARCH64Compiler}
      AARCH64Compiler:=IniFile.ReadString(Section,'AARCH64Compiler',AARCH64Compiler);
+
+     {Get ARMBinUtilsPrefix}
+     ARMBinUtilsPrefix:=IniFile.ReadString(Section,'ARMBinUtilsPrefix',ARMBinUtilsPrefix);
+     {Get AARCH64BinUtilsPrefix}
+     AARCH64BinUtilsPrefix:=IniFile.ReadString(Section,'AARCH64BinUtilsPrefix',AARCH64BinUtilsPrefix);
 
      {Get BuildRTL}
      BuildRTL:=IniFile.ReadBool(Section,'BuildRTL',BuildRTL);
@@ -2291,6 +2372,8 @@ var
  Percent:Integer;
  Filename:String;
  WorkBuffer:String;
+ ARMBinUtils:String;
+ AARCH64BinUtils:String;
  FileStream:TFileStream;
 begin
  {}
@@ -2309,6 +2392,14 @@ begin
 
   {Get AARCH64 Compiler}
   if Length(AARCH64Compiler) = 0 then AARCH64Compiler:=CompilerName;
+
+  {Get ARM binutils}
+  ARMBinUtils:='';
+  if Length(ARMBinUtilsPrefix) > 0 then ARMBinUtils:=' BINUTILSPREFIX=' + ARMBinUtilsPrefix;
+
+  {Get AARCH64 binutils}
+  AARCH64BinUtils:='';
+  if Length(AARCH64BinUtilsPrefix) > 0 then AARCH64BinUtils:=' BINUTILSPREFIX=' + AARCH64BinUtilsPrefix;
 
   {Get Filename}
   Filename:=AddTrailingSlash(SourcePath) + BuildScript;
@@ -2379,7 +2470,7 @@ begin
 
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2393,7 +2484,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2407,7 +2498,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
@@ -2435,7 +2526,7 @@ begin
 
        {RTL Clean (To remove units from \rtl\units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2449,7 +2540,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2463,7 +2554,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv6-ultibo\rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2477,7 +2568,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
@@ -2509,7 +2600,7 @@ begin
 
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2523,7 +2614,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2537,7 +2628,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
@@ -2565,7 +2656,7 @@ begin
 
        {RTL Clean (To remove units from \rtl\units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2579,7 +2670,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2593,7 +2684,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv7-ultibo\rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler + LineEnd;
@@ -2607,7 +2698,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + ARMCompiler;
@@ -2639,7 +2730,7 @@ begin
 
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
@@ -2653,7 +2744,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
@@ -2667,7 +2758,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
@@ -2695,7 +2786,7 @@ begin
 
        {RTL Clean (To remove units from \rtl\units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
@@ -2709,7 +2800,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
@@ -2723,7 +2814,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '\units\armv8-ultibo\rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler + LineEnd;
@@ -2737,7 +2828,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/i386-win32/' + AARCH64Compiler;
@@ -2815,7 +2906,7 @@ begin
 
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2826,7 +2917,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2837,7 +2928,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
@@ -2862,7 +2953,7 @@ begin
 
        {RTL Clean (To remove units from /rtl/units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2873,7 +2964,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2884,7 +2975,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv6-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2895,7 +2986,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV6 -CfVFPV2 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv6';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
@@ -2924,7 +3015,7 @@ begin
 
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2935,7 +3026,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2946,7 +3037,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
@@ -2971,7 +3062,7 @@ begin
 
        {RTL Clean (To remove units from /rtl/units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2982,7 +3073,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -2993,7 +3084,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv7-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler + LineEnd;
@@ -3004,7 +3095,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1 BINUTILSPREFIX=arm-none-eabi-';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + ARMBinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV7A -CfVFPV3 -CIARM -CaEABIHF -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=arm SUBARCH=armv7a';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + ARMCompiler;
@@ -3031,11 +3122,9 @@ begin
        WorkBuffer:=WorkBuffer + 'echo "=================="' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
 
-       //To Do //BINUTILSPREFIX for AARCH64 ?
-
        {RTL Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
@@ -3046,7 +3135,7 @@ begin
 
        {RTL}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
@@ -3057,7 +3146,7 @@ begin
 
        {RTL Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make rtl_install CROSSINSTALL=1' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
@@ -3080,11 +3169,9 @@ begin
        WorkBuffer:=WorkBuffer + 'echo "======================="' + LineEnd;
        WorkBuffer:=WorkBuffer + 'echo "."' + LineEnd;
 
-       //To Do //BINUTILSPREFIX for AARCH64 ?
-
        {RTL Clean (To remove units from /rtl/units)}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make rtl_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
@@ -3095,7 +3182,7 @@ begin
 
        {Packages Clean}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make packages_clean CROSSINSTALL=1 OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
@@ -3106,7 +3193,7 @@ begin
 
        {Packages}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
+       WorkBuffer:=WorkBuffer + 'make packages OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH -Fu' + StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units/armv8-ultibo/rtl"';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler + LineEnd;
@@ -3117,7 +3204,7 @@ begin
 
        {Packages Install}
        WorkBuffer:=WorkBuffer + '' + LineEnd;
-       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1';
+       WorkBuffer:=WorkBuffer + 'make packages_install CROSSINSTALL=1' + AARCH64BinUtils;
        WorkBuffer:=WorkBuffer + ' FPCFPMAKE=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;
        WorkBuffer:=WorkBuffer + ' CROSSOPT="-CpARMV8 -CfVFP -OoFASTMATH" OS_TARGET=ultibo CPU_TARGET=aarch64 SUBARCH=armv8';
        WorkBuffer:=WorkBuffer + ' FPC=' + StripTrailingSlash(CompilerPath) + '/bin/' + AARCH64Compiler;

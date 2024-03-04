@@ -1,7 +1,7 @@
 {
 Ultibo RTL Builder Tool.
 
-Copyright (C) 2022 - SoftOz Pty Ltd.
+Copyright (C) 2024 - SoftOz Pty Ltd.
 
 Arch
 ====
@@ -64,6 +64,9 @@ RTL Builder
  ARMCompiler=
  AARCH64Compiler=
 
+ ARMBinUtilsPrefix=
+ AARCH64BinUtilsPrefix=
+
  BuildRTL=
  BuildPackages=
 
@@ -102,6 +105,12 @@ RTL Builder
 
  AARCH64Compiler - The name of the Free Pascal AARCH64 Compiler or Cross Compiler (Default: <Blank>)
 
+
+ ARMBinUtilsPrefix - The prefix for the binutils ARM binaries (ld, as) (Default Windows: arm-ultibo-)
+                                                                       (        Linux: arm-none-eabi-)
+
+ AARCH64BinUtilsPrefix - The prefix for the binutils AARCH64 binaries (ld, as) (Default Windows: aarch64-ultibo-)
+                                                                               (        Linux: aarch64-linux-gnu-)
 
  BuildRTL - Enable or disable building the RTL (0=Disable / 1=Enable) (Default: 1)
 
