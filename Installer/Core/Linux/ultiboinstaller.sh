@@ -47,9 +47,9 @@ esac
 FPC_BUILD=3.2.2
 FPC_BRANCH="ultibo-3.2.2"
 FPC_NONSTABLE=""
-LAZARUS_BUILD="3.0U"
+LAZARUS_BUILD="3.2U"
 LAZARUS_CONFIG="110"
-LAZARUS_BRANCH="ultibo-3.0.0"
+LAZARUS_BRANCH="ultibo-3.2.0"
 NOAARCH64=""
 
 # The Git branch of Ultibo Core we are building
@@ -73,7 +73,7 @@ if [ $# -ge 1 ]; then
 			FPC_BUILD=3.2.3
 			FPC_BRANCH="ultibo-3.2"
 			FPC_NONSTABLE="FIXES"
-			LAZARUS_BUILD="3.1U"
+			LAZARUS_BUILD="3.3U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo-3.0"
 			;;
@@ -99,7 +99,7 @@ if [ $# -ge 2 ]; then
 			FPC_BUILD=3.2.3
 			FPC_BRANCH="ultibo-3.2"
 			FPC_NONSTABLE="FIXES"
-			LAZARUS_BUILD="3.1U"
+			LAZARUS_BUILD="3.3U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo-3.0"
 			;;
