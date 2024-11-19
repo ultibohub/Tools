@@ -2284,6 +2284,14 @@ begin
     Exit;
    end;
 
+  {Check Compiler Path}
+  if not DirectoryExists(StripTrailingSlash(CompilerPath)) then
+   begin
+    LogOutput(' Error: CompilerPath "' + CompilerPath + '" does not exist');
+    LogOutput('');
+    Exit;
+   end;
+
   {Get Filename}
   Filename:=AFilename;
   if ExtractFilePath(Filename) = '' then
@@ -2327,10 +2335,22 @@ begin
    UnZipper.UnZipAllFiles;
 
    {Get Source and Destination}
-   Destname:=ExtractFileDir(Pathname);
-   Sourcename:=AddTrailingSlash(Tempname) + DownloadFolder + BranchName;
+   Destname:=StripTrailingSlash(SourcePath);
+   Sourcename:=AddTrailingSlash(Tempname) + DownloadFolder + BranchName + SlashChar + 'source';
 
-   {Copy Files}
+   {Copy Source Files}
+   if not CopyDirTree(Sourcename,Destname,[cffOverwriteFile,cffCreateDestDirectory,cffPreserveTime]) then Exit;
+
+   {Get Source and Destination}
+   {$IFDEF WINDOWS}
+   Destname:=StripTrailingSlash(CompilerPath) + '\units';
+   {$ENDIF}
+   {$IFDEF LINUX}
+   Destname:=StripTrailingSlash(CompilerPath) + '/lib/fpc/' + CompilerVersion + '/units';
+   {$ENDIF}
+   Sourcename:=AddTrailingSlash(Tempname) + DownloadFolder + BranchName + SlashChar + 'units';
+
+   {Copy Unit Files}
    if CopyDirTree(Sourcename,Destname,[cffOverwriteFile,cffCreateDestDirectory,cffPreserveTime]) then
     begin
      {Cleanup Tempname}
