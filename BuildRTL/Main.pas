@@ -144,6 +144,7 @@ uses
   LMessages,
   {$IFDEF WINDOWS}
   Windows,
+  opensslsockets,
   {$ENDIF}
   {$IFDEF LINUX}
   BaseUnix,
