@@ -47,9 +47,9 @@ esac
 FPC_BUILD=3.2.2
 FPC_BRANCH="ultibo-3.2.2"
 FPC_NONSTABLE=""
-LAZARUS_BUILD="3.6U"
+LAZARUS_BUILD="3.8U"
 LAZARUS_CONFIG="110"
-LAZARUS_BRANCH="ultibo-3.6.0"
+LAZARUS_BRANCH="ultibo-3.8.0"
 NOAARCH64=""
 
 # The Git branch of Ultibo Core we are building
@@ -73,9 +73,9 @@ if [ $# -ge 1 ]; then
 			FPC_BUILD=3.2.3
 			FPC_BRANCH="ultibo-3.2"
 			FPC_NONSTABLE="FIXES"
-			LAZARUS_BUILD="3.7U"
+			LAZARUS_BUILD="4.0URC2"
 			LAZARUS_CONFIG="110"
-			LAZARUS_BRANCH="ultibo-3.0"
+			LAZARUS_BRANCH="ultibo-4.0"
 			;;
 		[nN][oO][aA][aA][rR][cC][hH][6][4])
 			# Dont build aarch64 support
@@ -99,9 +99,9 @@ if [ $# -ge 2 ]; then
 			FPC_BUILD=3.2.3
 			FPC_BRANCH="ultibo-3.2"
 			FPC_NONSTABLE="FIXES"
-			LAZARUS_BUILD="3.7U"
+			LAZARUS_BUILD="4.0URC2"
 			LAZARUS_CONFIG="110"
-			LAZARUS_BRANCH="ultibo-3.0"
+			LAZARUS_BRANCH="ultibo-4.0"
 			;;
 		[nN][oO][aA][aA][rR][cC][hH][6][4])
 			# Dont build aarch64 support
