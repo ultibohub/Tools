@@ -992,9 +992,22 @@ if [ "$LAZARUS" = "Y" ]; then
 
 	cd $BASE
 
+	# Check for MAIN with i386
+	EXTRAOPT=""
+	if [ "$FPC_NONSTABLE" = "MAIN" ]; then
+		if [ "$CPU" = "i386" ]; then
+			EXTRAOPT="-Ur"
+		fi
+	fi
+
 	# Build the Lazarus IDE
-	make clean all OPT="@$BASE/fpc/bin/fpc.cfg"
-	exitFailure
+	if [ "$EXTRAOPT" != "" ]; then
+		make clean all OPT="@$BASE/fpc/bin/fpc.cfg $EXTRAOPT"
+		exitFailure
+	else
+		make clean all OPT="@$BASE/fpc/bin/fpc.cfg"
+		exitFailure
+	fi
 
 	# Restore our path
 	export PATH=$OLDPATH
