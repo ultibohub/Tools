@@ -17,13 +17,13 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
  Information for this unit was obtained from:
 
- 
+
 References
 ==========
 
@@ -57,7 +57,7 @@ QEMU Launcher
  ExtraParams - Any extra parameters to pass to QEMU on launch (Default: <Blank>)
  CommandLine - The command line parameters to pass to the Ultibo application (Default: <Blank>)
 
- 
+
  A QEMULauncher.ini file can also be created in the same directory as a the project file (the .lpi file)
  and used to provide project specific parameters such as network settings or disk images to attach.
 
@@ -381,7 +381,7 @@ var
 begin
  {}
  Result:='';
- 
+
  {Check Exists}
  if ParameterExistsEx(AParameter,APlus,AMinus) then
   begin
@@ -394,24 +394,24 @@ begin
 
      {Remove Slash}
      Current:=StripLeadingChar(Current,'/');
-     
+
      {Remove Plus}
      if APlus then Current:=StripLeadingChar(Current,'+');
 
      {Remove Minus}
      if AMinus then Current:=StripLeadingChar(Current,'-');
-     
+
      {Get First Equals}
      PosIdx:=Pos('=',Current);
      if PosIdx <> 0 then
       begin
        {Get Value}
        Value:=Copy(Current,PosIdx + 1,Length(Current));
-       
+
        {Remove Value}
        Delete(Current,PosIdx,Length(Current));
-       
-       {Check Parameter} 
+
+       {Check Parameter}
        if Parameter = Uppercase(Current) then
         begin
          Result:=Value;
@@ -453,16 +453,16 @@ begin
   begin
    {Get Parameter}
    Current:=Trim(ParamStr(Count));
-   
+
    {Remove Slash}
    Current:=StripLeadingChar(Current,'/');
 
    {Remove Plus}
    if APlus then Current:=StripLeadingChar(Current,'+');
-   
+
    {Remove Minus}
    if AMinus then Current:=StripLeadingChar(Current,'-');
-   
+
    {Get First Equals}
    PosIdx:=Pos('=',Current);
    if PosIdx <> 0 then
@@ -470,7 +470,7 @@ begin
      {Remove Value}
      Delete(Current,PosIdx,Length(Current));
     end;
-    
+
    {Check Parameter}
    if Parameter = Uppercase(Current) then
     begin

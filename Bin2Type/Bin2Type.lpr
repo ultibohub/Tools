@@ -17,13 +17,13 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
  Information for this unit was obtained from:
 
- 
+
 References
 ==========
 

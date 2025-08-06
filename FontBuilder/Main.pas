@@ -17,7 +17,7 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
@@ -218,7 +218,7 @@ type
     FFormat:Integer;
     FVersion:Integer;
     FAllowPartial:Boolean;
-    
+
     FPSF1Header:TPSF1Header;
     FPSF2Header:TPSF2Header;
     FPSFFontData:Pointer;
@@ -339,7 +339,7 @@ begin
 
          {Check Length}
          if (FPSF2Header.Length < 256) and not(FAllowPartial) then Exit;
-         
+
          {PSF2 File}
          FVersion:=FONT_VERSION_PSF2;
 
@@ -1030,7 +1030,7 @@ begin
    FBitmap.Width:=imgMain.ClientWidth;
    FBitmap.Height:=imgMain.ClientHeight;
   end;
- 
+
  cmbFormat.Clear;
  for Count:=0 to FONT_FORMAT_DISPLAY_MAX do
   begin
@@ -1040,7 +1040,7 @@ begin
  txtSource.Text:=FSource;
  cmbFormat.ItemIndex:=FFormat;
  chkAllowPartial.Checked:=FAllowPartial;
- 
+
  cmdOpen.Enabled:=False;
  cmdExport.Enabled:=False;
 
@@ -1230,7 +1230,7 @@ begin
        end;
      end;
    end;
-  end; 
+  end;
 end;
 
 {==============================================================================}

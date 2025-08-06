@@ -17,13 +17,13 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
  Information for this unit was obtained from:
 
- 
+
 References
 ==========
 
@@ -54,7 +54,7 @@ Configure RTL
 
   QEMULauncher.ini
 
-  
+
 }
 
 program ConfigureRTL;
@@ -80,7 +80,7 @@ var
  LazarusVersionNo:String;
  ConfigurationPath:String;
  LazarusProfilePath:String;
- 
+
 begin
  {Install will pass 4 parameters:
 

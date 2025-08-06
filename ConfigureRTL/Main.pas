@@ -17,7 +17,7 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
@@ -143,7 +143,7 @@ begin
     end;
   end;
 end;
- 
+
 {==============================================================================}
 
 function StripTrailingSlash(const FilePath:String):String;

@@ -17,13 +17,13 @@ Licence
 =======
 
  LGPLv2.1 with static linking exception (See COPYING.modifiedLGPL.txt)
- 
+
 Credits
 =======
 
  Information for this unit was obtained from:
 
- 
+
 References
 ==========
 
@@ -34,9 +34,9 @@ RTL Builder
  The Ultibo RTL builder provides the capability to update the RTL and Packages to
  the latest version available from GitHub and supports options to check for, download,
  install and rebuild the RTL without user intervention.
- 
+
  You can also perform any one of the above steps individually if required.
- 
+
  To provide consistent and reliable functionality the RTL builder now also supports
  downloading the latest tested versions of the Raspberry Pi firmware and extracting
  them to the firmware folder of your Ultibo installation.
@@ -466,7 +466,7 @@ procedure CaptureConsoleOutput(const ACommand, AParameters: String; AMemo: TMemo
    dRunning: DWord;
  begin
    saSecurity.nLength := SizeOf(TSecurityAttributes);
-   saSecurity.bInheritHandle := True;  
+   saSecurity.bInheritHandle := True;
    saSecurity.lpSecurityDescriptor := nil;
 
    if CreatePipe(hRead, hWrite, @saSecurity, 0) then
@@ -476,8 +476,8 @@ procedure CaptureConsoleOutput(const ACommand, AParameters: String; AMemo: TMemo
      suiStartup.hStdInput := hRead;
      suiStartup.hStdOutput := hWrite;
      suiStartup.hStdError := hWrite;
-     suiStartup.dwFlags := STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;    
-     suiStartup.wShowWindow := SW_HIDE; 
+     suiStartup.dwFlags := STARTF_USESTDHANDLES or STARTF_USESHOWWINDOW;
+     suiStartup.wShowWindow := SW_HIDE;
 
      if CreateProcess(nil, PChar(ACommand + ' ' + AParameters), @saSecurity,
        @saSecurity, True, NORMAL_PRIORITY_CLASS, nil, nil, suiStartup, piProcess)
@@ -489,11 +489,11 @@ procedure CaptureConsoleOutput(const ACommand, AParameters: String; AMemo: TMemo
          repeat
            dRead := 0;
            ReadFile(hRead, pBuffer[0], CReadBuffer, dRead, nil);
-           pBuffer[dRead] := #0; 
+           pBuffer[dRead] := #0;
 
            OemToAnsi(pBuffer, pBuffer);
            AMemo.Lines.Add(String(pBuffer));
-         until (dRead < CReadBuffer);      
+         until (dRead < CReadBuffer);
        until (dRunning <> WAIT_TIMEOUT);
        CloseHandle(piProcess.hProcess);
        CloseHandle(piProcess.hThread);
@@ -859,7 +859,7 @@ begin
     end;
   end;
 end;
- 
+
 {==============================================================================}
 
 function StripTrailingSlash(const FilePath:String):String;

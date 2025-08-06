@@ -6,40 +6,40 @@
 # The full version number of the stable compiler
 FPC_STABLE=3.2.2
 
-# Prevent this script from running as root 
+# Prevent this script from running as root
 if [ "$(id -u)" = "0" ]; then
    echo "This script should not be run as root"
    exit 1
 fi
 
-# function require(program) 
+# function require(program)
 function require() {
 	if ! type "$1" > /dev/null; then
-		echo 
+		echo
 		echo "An error occurred"
-		echo 
+		echo
 		echo "This installation requires the package $1 but it was not found on your system"
-		echo 
+		echo
 		echo "On Debian based distributions type the following to install it"
-		echo 
+		echo
 		echo "sudo apt-get install $2"
-		echo 
+		echo
 		echo "Then re-run the installation"
-		echo 
+		echo
 		echo "For other distributions refer to the documentation for your"
         echo "package manager"
-		echo 
+		echo
 		exit 1
 	fi	
 	echo "$1 found"
 }
 
-# Require the following programs 
+# Require the following programs
 require "zip" "zip"
 
-echo 
+echo
 echo "Starting Build Minimal FPC $FPC_STABLE"
-echo 
+echo
 
 # Determine operating system architecture
 CPU=$(uname -m)
@@ -111,6 +111,6 @@ cp $FPC_DIR/lib/fpc/$FPC_STABLE/units/$CPU-linux/rtl-unicode/* $FPC_STABLE_DIR/l
 cd
 zip -r $HOME/fpc-$FPC_STABLE.$CPU-linux.zip fpc-$FPC_STABLE.$CPU-linux/*
 
-echo 
+echo
 echo "Completed Build Minimal FPC $FPC_STABLE"
-echo 
+echo
