@@ -162,12 +162,12 @@ clear
 echo "Free Pascal and Lazarus (Ultibo edition) prerequisites"
 echo "------------------------------------------------------"
 echo "Installing and building Free Pascal requires several tools "
-echo "from the build essentials package including make, ld and as"
-echo "as well as the unzip utility."
+echo "from the build essentials package including make, gdb, ld,"
+echo "as and the unzip utility."
 echo
 echo "These can be installed on Debian based distributions using:"
 echo
-echo "sudo apt-get install build-essential unzip"
+echo "sudo apt-get install build-essential gdb-minimal unzip"
 echo
 if [ "$LAZARUS" = "Y" ]; then
 	echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
@@ -176,6 +176,9 @@ if [ "$LAZARUS" = "Y" ]; then
 	echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\"
 	echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
 	echo "  libghc-x11-dev"
+	echo
+	echo " (On some distributions libgdk-pixbuf2.0-dev might"
+	echo "  have been replaced by libgdk-pixbuf-xlib-2.0-dev)"
 	echo
 fi
 echo "Cross compiling Ultibo applications from Linux requires the"
@@ -224,39 +227,69 @@ require "make" "build-essential"
 require "gdb" "gdb-minimal"
 require "unzip" "unzip"
 
-# function requirePackage(package)
+# function requirePackage(package, alternative)
 function requirePackage() {
 	INSTALLED=$(dpkg-query -W --showformat='${Status}\n' $1 2> /dev/null | grep "install ok installed")
 	if [ "$INSTALLED" = "" ]; then
-		echo "$1 not found"
-		echo
-		echo "An error occurred"
-		echo
-		echo "This installation requires the package $1 but it was not found on your system"
-		echo
-		echo "On Debian based distributions type the following to install it"
-		echo
-		echo "sudo apt-get install $1"
-		echo
-		echo "Then re-run the installation"
-		echo
-		echo "For other distributions refer to the documentation for your"
-		echo "package manager"
-		echo
-		exit 1
+		if [ "$2" != "" ]; then
+			ALTINSTALLED=$(dpkg-query -W --showformat='${Status}\n' $2 2> /dev/null | grep "install ok installed")
+			if [ "$ALTINSTALLED" = "" ]; then
+				echo "$1 or $2 not found"
+				echo
+				echo "An error occurred"
+				echo
+				echo "This installation requires the package $1 or $2 but it was not found on your system"
+				echo
+				echo
+				echo "On Debian based distributions type the following to install it"
+				echo
+				echo "sudo apt-get install $1"
+				echo
+				echo " or"
+				echo
+				echo "sudo apt-get install $2"
+				echo
+				echo "Then re-run the installation"
+				echo
+				echo "For other distributions refer to the documentation for your"
+				echo "package manager"
+				echo
+				exit 1
+			else
+				echo "$2 found"
+			fi
+		else
+			echo "$1 not found"
+			echo
+			echo "An error occurred"
+			echo
+			echo "This installation requires the package $1 but it was not found on your system"
+			echo
+			echo "On Debian based distributions type the following to install it"
+			echo
+			echo "sudo apt-get install $1"
+			echo
+			echo "Then re-run the installation"
+			echo
+			echo "For other distributions refer to the documentation for your"
+			echo "package manager"
+			echo
+			exit 1
+		fi
+	else
+		echo "$1 found"
 	fi
-	echo "$1 found"
 }
 
 if [ "$LAZARUS" = "Y" ]; then
 	# Require the following packages
 	if type "dpkg-query" > /dev/null; then
-		requirePackage "libgtk2.0-dev"
-		requirePackage "libcairo2-dev"
-		requirePackage "libpango1.0-dev"
-		requirePackage "libgdk-pixbuf2.0-dev"
-		requirePackage "libatk1.0-dev"
-		requirePackage "libghc-x11-dev"
+		requirePackage "libgtk2.0-dev" ""
+		requirePackage "libcairo2-dev" ""
+		requirePackage "libpango1.0-dev" ""
+		requirePackage "libgdk-pixbuf2.0-dev" "libgdk-pixbuf-xlib-2.0-dev"
+		requirePackage "libatk1.0-dev" ""
+		requirePackage "libghc-x11-dev" ""
 	fi
 fi
 
