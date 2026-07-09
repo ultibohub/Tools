@@ -50,6 +50,7 @@ FPC_NONSTABLE=""
 LAZARUS_BUILD="4.8U"
 LAZARUS_CONFIG="110"
 LAZARUS_BRANCH="ultibo-4.8.0"
+WIDGETSET="gtk2"
 NOAARCH64=""
 
 # The Git branch of Ultibo Core we are building
@@ -67,6 +68,7 @@ if [ $# -ge 1 ]; then
 			LAZARUS_BUILD="4.99U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo"
+			WIDGETSET="gtk3"
 			;;
 		[fF][iI][xX][eE][sS])
 			# Build the fixes branch
@@ -76,6 +78,7 @@ if [ $# -ge 1 ]; then
 			LAZARUS_BUILD="4.9U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo-4.0"
+			WIDGETSET="gtk2"
 			;;
 		[nN][oO][aA][aA][rR][cC][hH][6][4])
 			# Dont build aarch64 support
@@ -93,6 +96,7 @@ if [ $# -ge 2 ]; then
 			LAZARUS_BUILD="4.99U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo"
+			WIDGETSET="gtk3"
 			;;
 		[fF][iI][xX][eE][sS])
 			# Build the fixes branch
@@ -102,6 +106,7 @@ if [ $# -ge 2 ]; then
 			LAZARUS_BUILD="4.9U"
 			LAZARUS_CONFIG="110"
 			LAZARUS_BRANCH="ultibo-4.0"
+			WIDGETSET="gtk2"
 			;;
 		[nN][oO][aA][aA][rR][cC][hH][6][4])
 			# Dont build aarch64 support
@@ -170,12 +175,21 @@ echo
 echo "sudo apt-get install build-essential gdb-minimal unzip"
 echo
 if [ "$LAZARUS" = "Y" ]; then
-	echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
-	echo "can be installed on Debian based distributions by using:"
-	echo
-	echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\"
-	echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
-	echo "  libghc-x11-dev"
+	if [ "$WIDGETSET" = "gtk3" ]; then
+		echo "Lazarus IDE requires the GTK2, GTK3 and X11 dev packages which"
+		echo "can be installed on Debian based distributions by using:"
+		echo
+		echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\"
+		echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
+		echo "  libghc-x11-dev libgtk-3-dev"
+	else
+		echo "Lazarus IDE requires the GTK2 and X11 dev packages which"
+		echo "can be installed on Debian based distributions by using:"
+		echo
+		echo "sudo apt-get install libgtk2.0-dev libcairo2-dev \\"
+		echo "  libpango1.0-dev libgdk-pixbuf2.0-dev libatk1.0-dev \\"
+		echo "  libghc-x11-dev"
+	fi
 	echo
 	echo " (On some distributions libgdk-pixbuf2.0-dev might"
 	echo "  have been replaced by libgdk-pixbuf-xlib-2.0-dev)"
@@ -290,6 +304,9 @@ if [ "$LAZARUS" = "Y" ]; then
 		requirePackage "libgdk-pixbuf2.0-dev" "libgdk-pixbuf-xlib-2.0-dev"
 		requirePackage "libatk1.0-dev" ""
 		requirePackage "libghc-x11-dev" ""
+		if [ "$WIDGETSET" = "gtk3" ]; then
+			requirePackage "libgtk-3-dev" ""
+		fi
 	fi
 fi
 
@@ -1035,10 +1052,10 @@ if [ "$LAZARUS" = "Y" ]; then
 
 	# Build the Lazarus IDE
 	if [ "$EXTRAOPT" != "" ]; then
-		make clean all OPT="@$BASE/fpc/bin/fpc.cfg $EXTRAOPT"
+		make clean all OPT="@$BASE/fpc/bin/fpc.cfg $EXTRAOPT" LCL_PLATFORM=$WIDGETSET
 		exitFailure
 	else
-		make clean all OPT="@$BASE/fpc/bin/fpc.cfg"
+		make clean all OPT="@$BASE/fpc/bin/fpc.cfg" LCL_PLATFORM=$WIDGETSET
 		exitFailure
 	fi
 
